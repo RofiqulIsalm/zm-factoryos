@@ -131,6 +131,7 @@ router.get("/me", async (req, res): Promise<void> => {
   }
   res.json(GetCurrentUserResponse.parse({
     id: user.id,
+    username: user.username,
     name: user.name,
     employeeId: user.employeeId,
     email: user.email,
@@ -138,6 +139,8 @@ router.get("/me", async (req, res): Promise<void> => {
     department: user.department,
     role: user.role,
     active: user.active,
+    status: user.status,
+    mustChangePassword: user.mustChangePassword,
     permissions: user.permissions,
     lastLogin: user.lastLogin?.toISOString() ?? null,
     createdAt: dateTime(user.createdAt),
