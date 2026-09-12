@@ -1,0 +1,1 @@
+- [Clerk import naming](clerk-import-naming.md) — imported zip-derived project names can be rejected by managed Clerk provisioning when they contain upload suffixes.
