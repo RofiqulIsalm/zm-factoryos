@@ -9,10 +9,14 @@
 export interface UserInput {
   /** @minLength 1 */
   name: string;
+  /** @minLength 3 */
+  username: string;
   employeeId?: string;
   email: string;
   phone?: string;
   department: string;
   role: string;
+  /** @minLength 10 */
+  temporaryPassword: string;
   permissions?: string[];
 }

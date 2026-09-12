@@ -806,9 +806,10 @@ components:
         balance: { type: number, format: double }
     User:
       type: object
-      required: [id, name, email, department, role, active, createdAt]
+      required: [id, username, name, email, department, role, active, status, mustChangePassword, createdAt]
       properties:
         id: { type: string, format: uuid }
+        username: { type: string }
         name: { type: string }
         employeeId: { type: ["string", "null"] }
         email: { type: string, format: email }
@@ -816,6 +817,8 @@ components:
         department: { type: string }
         role: { type: string }
         active: { type: boolean }
+        status: { type: string, enum: [ACTIVE, INACTIVE, LOCKED] }
+        mustChangePassword: { type: boolean }
         permissions:
           type: array
           items: { type: string }
@@ -823,14 +826,16 @@ components:
         createdAt: { type: string, format: date-time }
     UserInput:
       type: object
-      required: [name, email, department, role]
+      required: [name, username, email, department, role, temporaryPassword]
       properties:
         name: { type: string, minLength: 1 }
+        username: { type: string, minLength: 3 }
         employeeId: { type: string }
         email: { type: string, format: email }
         phone: { type: string }
         department: { type: string }
         role: { type: string }
+        temporaryPassword: { type: string, minLength: 10 }
         permissions:
           type: array
           items: { type: string }

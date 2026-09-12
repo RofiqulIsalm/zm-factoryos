@@ -1,0 +1,2981 @@
+# MASTER PROMPT
+# ZM PRINTING & DESIGN LTD — FACTORY MANAGEMENT WEB APPLICATION
+# Project Codename: ZM FactoryOS
+# Build Type: Production-ready Full-Stack Web Application
+# Development Platform: Replit
+# IMPORTANT: Build this application from scratch.
+
+============================================================
+0. ROLE & MISSION
+============================================================
+
+You are acting as a senior:
+
+- Product Architect
+- UX/UI Designer
+- Full-Stack Engineer
+- Database Architect
+- Security Engineer
+- ERP/Factory Workflow Designer
+- QA Engineer
+
+Your mission is to design and build a completely new, professional,
+modern and scalable Factory Management Web Application for:
+
+ZM PRINTING & DESIGN LTD
+
+This is NOT a simple admin dashboard.
+
+This is a real-world internal factory management system that will
+eventually manage:
+
+- Factory jobs
+- Buyers / Companies
+- Reception
+- Design
+- Samples
+- Production
+- Quality Control
+- Delivery
+- Billing
+- Invoices
+- Payments
+- Accounting
+- Inventory / Store
+- Employees
+- Users
+- Departments
+- Permissions
+- Reports
+- Management analytics
+- Future factory modules
+
+The application must be designed so that new departments and modules
+can be added later WITHOUT rewriting the entire application.
+
+============================================================
+1. VERY IMPORTANT DEVELOPMENT RULE
+============================================================
+
+BUILD FROM SCRATCH.
+
+Do NOT copy the architecture of an existing application.
+
+Do NOT blindly generate a generic SaaS admin template.
+
+Do NOT create fake-looking dashboards with static numbers.
+
+Do NOT hardcode business data into UI components.
+
+Do NOT use mock data as the permanent implementation.
+
+Create a real database-backed application.
+
+Every important number shown in dashboards must eventually come from
+the database.
+
+Every important button must perform a real action.
+
+Every form must save real data.
+
+Every workflow transition must be recorded.
+
+Every user must have proper authentication and authorization.
+
+============================================================
+2. PRODUCT VISION
+============================================================
+
+The system should work around one central concept:
+
+                 FACTORY
+
+                    |
+        +-----------+-----------+
+        |           |           |
+     USERS      DEPARTMENTS   CLIENTS
+                                |
+                               JOB
+                                |
+       +------------------------+------------------------+
+       |                        |                        |
+   RECEPTION                 DESIGN                 SAMPLE
+       |                        |                        |
+       +------------------------+------------------------+
+                                |
+                            PRODUCTION
+                                |
+                               QC
+                                |
+                              READY
+                                |
+                            DELIVERY
+                                |
+                              BILLING
+                                |
+                             PAYMENT
+                                |
+                           ACCOUNTING
+
+A JOB should become the central operational entity.
+
+Example:
+
+JOB-260912-0001
+
+That single Job should be traceable through the entire factory.
+
+The system should answer:
+
+- Who received this job?
+- Which company sent it?
+- What is the job?
+- Which printing section?
+- How many pieces?
+- What design/sample is associated?
+- Has production started?
+- Who is responsible?
+- How many pieces completed?
+- How many pieces damaged?
+- Has QC passed?
+- Is it ready?
+- Has it been delivered?
+- What invoice is associated?
+- How much has been paid?
+- How much is due?
+- What was the total cost?
+- What is the profit?
+- Who changed the status?
+- When was it changed?
+
+============================================================
+3. INITIAL MODULES
+============================================================
+
+The first production version must focus on these core modules:
+
+1. MD / Management
+2. User & Permission Management
+3. Reception
+4. Billing
+5. Accounting
+
+But the architecture MUST already support future modules:
+
+6. Design
+7. Sample Management
+8. Production
+9. QC
+10. Delivery
+11. Inventory / Store
+12. Purchase
+13. Supplier Management
+14. Employee / HR
+15. Payroll
+16. Machine Management
+17. Maintenance
+18. Reports
+19. Notifications
+20. Client Management
+21. Settings
+
+Do not build every future module deeply in version 1.
+
+Instead, create a scalable module architecture where future modules
+can be plugged in cleanly.
+
+============================================================
+4. TECHNOLOGY STACK
+============================================================
+
+Use a modern stable production-oriented stack.
+
+Preferred:
+
+Frontend:
+- Next.js
+- TypeScript
+- App Router
+
+Styling:
+- Tailwind CSS
+
+UI:
+- shadcn/ui or an equivalent high-quality accessible component system
+
+Icons:
+- Lucide React
+
+Database:
+- PostgreSQL
+
+ORM:
+- Prisma
+
+Authentication:
+- Auth.js / NextAuth or another secure session-based authentication
+  system compatible with the chosen stack
+
+Validation:
+- Zod
+
+Forms:
+- React Hook Form
+
+Charts:
+- Recharts or equivalent
+
+Tables:
+- TanStack Table where useful
+
+Notifications:
+- Sonner or equivalent
+
+Password hashing:
+- Argon2 or bcrypt
+
+Use server-side authorization checks.
+
+Do not rely only on hiding UI buttons for security.
+
+============================================================
+5. DESIGN PHILOSOPHY
+============================================================
+
+The application must feel like a premium modern factory ERP.
+
+Design goals:
+
+- Professional
+- Clean
+- Fast
+- Minimal
+- Easy to understand
+- Very low learning curve
+- Excellent information hierarchy
+- Desktop-first
+- Fully responsive
+- Tablet friendly
+- Mobile usable
+- Accessible
+- Consistent
+
+Do NOT make it look like:
+
+- A gaming dashboard
+- A cryptocurrency dashboard
+- A random template
+- An overly colorful analytics application
+- A complicated enterprise system from 2005
+
+The UI should look modern enough for management but simple enough
+for factory employees.
+
+============================================================
+6. BRANDING
+============================================================
+
+Company name:
+
+ZM PRINTING & DESIGN LTD
+
+Application name:
+
+ZM FactoryOS
+
+You may visually use:
+
+"ZM FactoryOS"
+"ZM Printing & Design Ltd."
+
+Create a clean professional logo treatment using typography and
+a simple printing/factory-inspired icon.
+
+Do not create an unnecessarily complex logo.
+
+Primary visual direction:
+
+- Professional blue
+- Deep navy
+- White
+- Soft gray
+- Subtle purple/indigo accents where appropriate
+- Green for positive states
+- Red for errors/damage/financial risk
+- Amber for pending/warning
+
+Use a restrained color system.
+
+============================================================
+7. GLOBAL APPLICATION LAYOUT
+============================================================
+
+Desktop:
+
+---------------------------------------------------
+| Sidebar | Topbar                               |
+|         |--------------------------------------|
+|         |                                      |
+|         | Main Content                         |
+|         |                                      |
+|         |                                      |
+---------------------------------------------------
+
+Sidebar:
+
+- Company logo
+- Dashboard
+- My Department
+- Jobs
+- Clients
+- Production
+- Billing
+- Accounting
+- Reports
+- Users
+- Settings
+
+BUT:
+
+Sidebar items must be dynamically filtered based on permissions.
+
+A Reception user must NOT see Accounting if they do not have access.
+
+A Billing user must NOT see HR.
+
+MD can see everything.
+
+Admin can manage the system according to permissions.
+
+Topbar:
+
+- Page title
+- Breadcrumb
+- Global search
+- Notification icon
+- User profile
+- Role badge
+- Department
+- Quick actions where appropriate
+
+User menu:
+
+- Profile
+- Change password
+- Preferences
+- Logout
+
+============================================================
+8. AUTHENTICATION
+============================================================
+
+Create a secure login system.
+
+Login screen should be premium and simple.
+
+Fields:
+
+- Email / Username
+- Password
+- Remember session if supported securely
+- Login button
+
+Do NOT display real default passwords publicly in production.
+
+Support:
+
+- Login
+- Logout
+- Session expiration
+- Change password
+- Password reset architecture
+- Account active/inactive
+- Login protection
+- Secure password hashing
+
+After login, redirect users based on their role or configured
+landing page.
+
+============================================================
+9. USER SYSTEM
+============================================================
+
+Every employee using the application gets an individual account.
+
+User fields:
+
+- ID
+- Employee ID
+- Name
+- Profile photo
+- Email
+- Phone
+- Username
+- Password hash
+- Department
+- Role
+- Active / inactive
+- Created date
+- Last login
+- Created by
+- Updated date
+
+Never store plain text passwords.
+
+============================================================
+10. ROLE SYSTEM
+============================================================
+
+Create flexible roles.
+
+Initial roles:
+
+MD
+ADMIN
+RECEPTION
+BILLING
+ACCOUNTING
+
+Future roles:
+
+DESIGN
+PRODUCTION
+QC
+STORE
+DELIVERY
+HR
+SUPERVISOR
+MANAGER
+
+But do NOT hardcode permissions directly into role names.
+
+Create a real permission system.
+
+============================================================
+11. PERMISSION SYSTEM
+============================================================
+
+This is one of the most important parts.
+
+Permissions should support:
+
+VIEW
+CREATE
+EDIT
+DELETE
+APPROVE
+REJECT
+UPDATE_STATUS
+EXPORT
+PRINT
+VIEW_FINANCIAL
+MANAGE_USERS
+MANAGE_SETTINGS
+VIEW_REPORTS
+
+Example:
+
+Reception Staff:
+
+VIEW_JOBS
+CREATE_JOB
+EDIT_JOB
+UPDATE_JOB_STATUS
+VIEW_CLIENTS
+
+But:
+
+NO_VIEW_ACCOUNTING
+NO_VIEW_PAYROLL
+NO_MANAGE_USERS
+
+Reception Manager may have:
+
+CREATE
+EDIT
+APPROVE
+REPORTS
+
+MD:
+
+FULL visibility.
+
+Admin:
+
+System administration.
+
+Allow administrators/MD to assign permissions to roles.
+
+Also allow exceptional user-specific permissions where necessary.
+
+Example:
+
+Role = Reception
+
+But user "Rahim" gets:
+
++ VIEW_PRODUCTION
+
+while another Reception user does not.
+
+============================================================
+12. USER MANAGEMENT SCREEN
+============================================================
+
+Create:
+
+/admin/users
+
+Features:
+
+- User list
+- Search
+- Filter by department
+- Filter by role
+- Active/inactive filter
+- Add user
+- Edit user
+- Activate/deactivate
+- Reset password
+- Assign department
+- Assign role
+- Manage permissions
+- View activity
+
+Create user form:
+
+- Name
+- Employee ID
+- Email
+- Phone
+- Department
+- Role
+- Permissions
+- Temporary password
+
+After creation:
+
+Show success notification.
+
+Never show password after the initial creation unnecessarily.
+
+============================================================
+13. MD EXECUTIVE DASHBOARD
+============================================================
+
+Create:
+
+/md
+
+This is the most powerful dashboard.
+
+MD should get a complete overview of the factory.
+
+Top KPI cards:
+
+1. Today's Jobs
+2. Active Jobs
+3. Jobs in Production
+4. Jobs in QC
+5. Ready for Delivery
+6. Today's Delivery
+7. Total Receivable
+8. Monthly Revenue
+9. Monthly Expense
+10. Estimated Profit
+
+Do NOT make all cards huge.
+
+Use a clean hierarchy.
+
+Charts:
+
+A. Job Status Pipeline
+
+Received
+Production
+QC
+Ready
+Delivered
+
+B. Department Workload
+
+Reception
+Design
+Production
+QC
+Delivery
+
+C. Revenue Trend
+
+Daily / Weekly / Monthly
+
+D. Expense Trend
+
+E. Revenue vs Expense
+
+F. Top Clients
+
+G. Delayed Jobs
+
+H. Damaged Pieces
+
+I. Pending Payments
+
+J. Recent Activity
+
+Example:
+
+Rahim created JOB-260912-0007
+10:35 AM
+
+Karim moved JOB-260912-0004
+Production → QC
+11:12 AM
+
+The dashboard must support date filters:
+
+Today
+Yesterday
+This Week
+This Month
+Last Month
+Custom Range
+
+Clicking a KPI should open the relevant filtered page.
+
+============================================================
+14. GLOBAL DASHBOARD PRINCIPLE
+============================================================
+
+Every dashboard must answer:
+
+"What needs my attention right now?"
+
+Therefore show:
+
+- Urgent jobs
+- Delayed jobs
+- Pending approvals
+- Low stock
+- Unpaid invoices
+- Overdue receivables
+- Outstanding supplier payments
+- Pending advances
+- QC failures
+- Damaged jobs
+
+Use an "Action Required" section.
+
+============================================================
+15. RECEPTION MODULE
+============================================================
+
+Reception is the first operational stage.
+
+Create:
+
+/reception
+/reception/jobs
+/reception/jobs/new
+/reception/jobs/[id]
+
+Reception dashboard:
+
+- Today's received jobs
+- Pending jobs
+- Jobs in production
+- Ready jobs
+- Today's deliveries
+- Urgent jobs
+
+============================================================
+16. NEW JOB
+============================================================
+
+Create a professional New Job form.
+
+Fields:
+
+Company / Client
+Contact person
+Job type
+Printing section
+Description
+Order quantity
+Received quantity
+Expected delivery date
+Priority
+Sample required?
+Notes
+Attachments
+
+Printing sections initially:
+
+- Sublimation
+- Silicone
+- Sonic
+
+Make sections database-driven so future sections can be added
+from Settings instead of rewriting code.
+
+Generate unique Job Number automatically.
+
+Format example:
+
+JOB-260912-0001
+
+Prevent duplicates.
+
+============================================================
+17. JOB DETAIL
+============================================================
+
+Job detail page should be one of the strongest screens.
+
+Header:
+
+JOB-260912-0001
+
+Company
+Priority
+Current Status
+Expected Delivery
+
+Show progress:
+
+RECEIVED
+↓
+DESIGN / SAMPLE
+↓
+PRODUCTION
+↓
+QC
+↓
+READY
+↓
+DELIVERED
+
+Only display stages relevant to the configured workflow.
+
+Job overview:
+
+- Total pieces
+- Received pieces
+- Production pieces
+- Completed pieces
+- QC passed
+- QC failed
+- Damaged pieces
+- Delivered pieces
+- Remaining pieces
+- Days in factory
+
+Show a visual timeline.
+
+Example:
+
+09:10 AM
+Job received by Rahim
+
+10:20 AM
+Moved to Production by Karim
+
+3:30 PM
+Production completed
+
+4:10 PM
+QC passed
+
+============================================================
+18. JOB STATUS ENGINE
+============================================================
+
+Do NOT allow random status changes.
+
+Create a controlled workflow engine.
+
+Possible statuses:
+
+DRAFT
+RECEIVED
+IN_DESIGN
+SAMPLE_PENDING
+SAMPLE_APPROVAL
+IN_PRODUCTION
+QC
+READY
+DELIVERED
+CANCELLED
+
+The exact workflow can depend on job type.
+
+Every status change must create an audit/timeline record.
+
+Store:
+
+- old status
+- new status
+- changed by
+- changed at
+- note
+
+============================================================
+19. DAMAGE TRACKING
+============================================================
+
+Damage is important for a printing factory.
+
+Track:
+
+- damaged pieces
+- damage reason
+- department
+- responsible stage
+- reported by
+- date
+- notes
+
+Examples:
+
+Printing defect
+Fabric defect
+Color problem
+Machine issue
+Design error
+Handling damage
+Other
+
+Show damage summary in:
+
+- Job
+- Production
+- QC
+- MD dashboard
+- Reports
+
+============================================================
+20. SAMPLE MANAGEMENT
+============================================================
+
+Create a sample workflow.
+
+Fields:
+
+- Job
+- Company
+- Description
+- Quantity
+- Section
+- Created by
+- Sent date
+- Approval status
+- Approved/rejected by
+- Approval date
+- Notes
+
+Statuses:
+
+PENDING
+SENT
+APPROVED
+REJECTED
+REVISION_REQUIRED
+
+============================================================
+21. FUTURE DESIGN MODULE
+============================================================
+
+Prepare architecture for Design department.
+
+Design module should eventually support:
+
+- Job queue
+- Assigned designer
+- Artwork upload
+- Artwork versions
+- Design status
+- Comments
+- Revision history
+- Approval
+- Final artwork
+- File attachments
+
+Do not fully implement if not part of version 1.
+
+But database architecture should allow it.
+
+============================================================
+22. FUTURE PRODUCTION MODULE
+============================================================
+
+Prepare architecture for:
+
+Production dashboard
+
+Show:
+
+- Waiting jobs
+- Running jobs
+- Completed jobs
+- Machine/section
+- Assigned operator
+- Start time
+- End time
+- Quantity produced
+- Damage
+- Notes
+
+Support production sections dynamically.
+
+============================================================
+23. FUTURE QC MODULE
+============================================================
+
+Prepare:
+
+QC inspection
+
+Fields:
+
+- Job
+- Inspector
+- inspected quantity
+- passed quantity
+- failed quantity
+- damage
+- reason
+- status
+- notes
+
+Statuses:
+
+PENDING
+PASSED
+FAILED
+RECHECK
+
+============================================================
+24. DELIVERY MODULE
+============================================================
+
+Delivery should connect with Jobs.
+
+Record:
+
+- Job
+- Company
+- Delivered quantity
+- Delivery person
+- Vehicle/courier
+- Delivery date
+- Receiver name
+- Notes
+- Challan number
+
+Generate delivery challan.
+
+============================================================
+25. BILLING MODULE
+============================================================
+
+Create:
+
+/billing
+/billing/orders
+/billing/orders/new
+/billing/orders/[id]
+/billing/invoices
+/billing/receivable
+/billing/payments
+
+Billing dashboard:
+
+- Total sales
+- Total received
+- Total receivable
+- Overdue receivable
+- Current month revenue
+- Recent invoices
+
+============================================================
+26. ORDER SYSTEM
+============================================================
+
+An order can contain multiple items.
+
+Example:
+
+Company:
+ABC Garments
+
+Items:
+
+Front Print
+1000 pcs × ৳12
+
+Back Print
+1000 pcs × ৳15
+
+Sleeve Print
+2000 pcs × ৳8
+
+Automatically calculate:
+
+Subtotal
+Discount
+Tax if enabled
+Grand Total
+
+Do NOT use floating point calculations for money.
+
+Use Decimal / database-safe numeric values.
+
+============================================================
+27. COST & PROFIT
+============================================================
+
+Each order should support:
+
+Sales amount
+Material cost
+Production cost
+Other cost
+Total cost
+Profit
+Profit margin
+
+Formula:
+
+Total Cost =
+Material Cost
++ Production Cost
++ Other Cost
+
+Profit =
+Sales - Total Cost
+
+Profit Margin =
+Profit / Sales × 100
+
+Display:
+
+Green = profitable
+Red = loss
+Amber = low margin
+
+============================================================
+28. INVOICE SYSTEM
+============================================================
+
+Generate invoices.
+
+Invoice fields:
+
+Invoice number
+Company
+Order
+Issue date
+Due date
+Items
+Subtotal
+Discount
+Tax
+Grand total
+Paid
+Due
+Status
+
+Statuses:
+
+UNPAID
+PARTIAL
+PAID
+OVERDUE
+CANCELLED
+
+Invoice numbers should be unique.
+
+Example:
+
+INV-260912-0001
+
+============================================================
+29. PAYMENT RECEIVING
+============================================================
+
+Support:
+
+Cash
+Bank
+bKash
+Nagad
+Other
+
+Record:
+
+- invoice
+- company
+- amount
+- payment method
+- reference number
+- date
+- received by
+- notes
+
+Payment should automatically update:
+
+Paid amount
+Due amount
+Invoice status
+Company receivable
+
+Do not directly overwrite financial totals without transaction records.
+
+============================================================
+30. ACCOUNTS RECEIVABLE
+============================================================
+
+Create:
+
+/billing/receivable
+
+Company-based summary:
+
+Company
+Total billed
+Total paid
+Total due
+Oldest due date
+Status
+
+Support:
+
+- Search
+- Filter
+- Date range
+- Payment history
+- Receive payment
+- Statement
+
+============================================================
+31. ACCOUNTS PAYABLE
+============================================================
+
+Prepare supplier/vendor accounting.
+
+Supplier fields:
+
+Name
+Company
+Contact
+Phone
+Address
+Category
+
+Purchases:
+
+Supplier
+Item
+Quantity
+Unit price
+Total
+Paid
+Due
+Date
+
+Payments:
+
+Supplier
+Purchase
+Amount
+Method
+Date
+Reference
+
+============================================================
+32. ACCOUNTING MODULE
+============================================================
+
+Create:
+
+/accounting
+
+Dashboard:
+
+Cash balance
+Today's income
+Today's expense
+Monthly income
+Monthly expense
+Net cash flow
+Pending advances
+Pending vouchers
+
+============================================================
+33. CASH LEDGER
+============================================================
+
+Create a proper transaction ledger.
+
+Types:
+
+INCOME
+EXPENSE
+
+Categories:
+
+Sales collection
+Advance
+Salary
+Utilities
+Transport
+Materials
+Machine maintenance
+Office expense
+Other
+
+Each ledger entry:
+
+Date
+Type
+Category
+Amount
+Description
+Reference
+Created by
+
+Balance must be calculated from transactions.
+
+============================================================
+34. STAFF ADVANCE
+============================================================
+
+Track employee advances.
+
+Fields:
+
+Employee
+Department
+Amount
+Date
+Reason
+Returned amount
+Remaining amount
+Status
+Approved by
+
+Statuses:
+
+PENDING
+PARTIAL
+RETURNED
+ADJUSTED
+
+============================================================
+35. DELIVERY VOUCHER
+============================================================
+
+Track money given to delivery staff.
+
+Fields:
+
+Delivery person
+Job
+Amount given
+Purpose
+Returned
+Remaining
+Date
+Approved by
+
+Calculate settlement automatically.
+
+============================================================
+36. CLIENT / COMPANY MANAGEMENT
+============================================================
+
+Create a central company/client database.
+
+Fields:
+
+Company name
+Contact person
+Phone
+Email
+Address
+Notes
+Status
+
+Company page should show:
+
+- Jobs
+- Orders
+- Invoices
+- Payments
+- Receivable
+- Samples
+- Activity
+
+This should be one of the most useful screens.
+
+============================================================
+37. GLOBAL SEARCH
+============================================================
+
+Create a global search.
+
+Search:
+
+Job number
+Company
+Invoice
+Order
+Employee
+Phone
+Client
+
+Example:
+
+Search:
+
+JOB-260912-0007
+
+Return:
+
+Job
+Company
+Current status
+Assigned department
+Invoice
+Payment status
+
+Search must be fast and support keyboard shortcuts if practical.
+
+============================================================
+38. NOTIFICATION SYSTEM
+============================================================
+
+Create notification architecture.
+
+Examples:
+
+New job received
+Job overdue
+Job ready
+QC failed
+Invoice overdue
+Payment received
+New user created
+Low stock
+Approval required
+
+Notifications should have:
+
+- title
+- description
+- type
+- read/unread
+- link
+- created time
+- recipient
+
+============================================================
+39. AUDIT LOG
+============================================================
+
+This is mandatory.
+
+Track sensitive actions.
+
+Examples:
+
+USER_CREATED
+USER_UPDATED
+ROLE_CHANGED
+PERMISSION_CHANGED
+JOB_CREATED
+JOB_UPDATED
+STATUS_CHANGED
+INVOICE_CREATED
+PAYMENT_RECEIVED
+LEDGER_CREATED
+PAYMENT_EDITED
+
+Store:
+
+User
+Action
+Entity
+Entity ID
+Old value
+New value
+IP/device metadata if appropriate
+Timestamp
+
+Create:
+
+/admin/audit-logs
+
+Only authorized users can see it.
+
+============================================================
+40. DATA SAFETY
+============================================================
+
+Important financial records should not simply be deleted.
+
+Use:
+
+Soft delete
+Void
+Cancel
+Reversal
+
+where appropriate.
+
+For example:
+
+Do NOT permanently delete a payment that has already affected
+financial records.
+
+Instead:
+
+VOID PAYMENT
+
+with:
+
+reason
+voided by
+voided at
+
+============================================================
+41. REPORTING
+============================================================
+
+Create a reporting architecture.
+
+Reports:
+
+Job report
+Production report
+Damage report
+Delivery report
+Sales report
+Invoice report
+Receivable report
+Payable report
+Income report
+Expense report
+Profit report
+Employee activity report
+Department performance report
+
+Filters:
+
+Today
+This week
+This month
+Last month
+Custom range
+
+Allow:
+
+Print
+PDF
+CSV/Excel export where practical
+
+============================================================
+42. PRINT DESIGN
+============================================================
+
+Create professional print layouts for:
+
+- Job receiving slip
+- Job card
+- Delivery challan
+- Invoice
+- Payment receipt
+- Voucher
+- Reports
+
+Print layouts must be clean and suitable for A4 paper.
+
+Use print CSS / PDF generation appropriately.
+
+============================================================
+43. RESPONSIVE DESIGN
+============================================================
+
+Desktop is the primary factory environment.
+
+But the application must work on:
+
+Desktop
+Laptop
+Tablet
+Mobile
+
+On mobile:
+
+- Sidebar becomes drawer
+- Tables become horizontally scrollable or card-based
+- Forms become single-column
+- Important actions remain easy to access
+
+============================================================
+44. TABLE UX
+============================================================
+
+Every major table should support:
+
+- Search
+- Sort
+- Filter
+- Pagination
+- Column visibility where useful
+- Date filtering
+- Status filtering
+- Empty state
+- Loading state
+- Error state
+
+Do NOT display enormous tables with no controls.
+
+============================================================
+45. FORM UX
+============================================================
+
+Use:
+
+React Hook Form
+Zod validation
+
+Show validation inline.
+
+Examples:
+
+"Company name is required"
+
+"Quantity must be greater than 0"
+
+"Delivery quantity cannot exceed available quantity"
+
+"Payment cannot exceed outstanding balance"
+
+Prevent invalid business logic both client-side and server-side.
+
+============================================================
+46. ERROR HANDLING
+============================================================
+
+Never show raw technical errors to employees.
+
+Bad:
+
+PrismaClientKnownRequestError...
+
+Good:
+
+"Unable to save this job. Please try again."
+
+For developers, log technical details securely.
+
+============================================================
+47. LOADING STATES
+============================================================
+
+Every important page must have:
+
+- Skeleton loading
+- Button loading state
+- Disabled state during submission
+
+Never allow double submission.
+
+Example:
+
+User clicks "Save Payment"
+
+Button becomes:
+
+"Saving..."
+
+Prevent duplicate payment creation.
+
+============================================================
+48. CONFIRMATION SYSTEM
+============================================================
+
+For dangerous actions:
+
+Delete
+Cancel
+Void
+Deactivate user
+Reject
+Reverse payment
+
+Use a proper confirmation dialog.
+
+Example:
+
+"Are you sure you want to deactivate this user?"
+
+============================================================
+49. DATABASE ARCHITECTURE
+============================================================
+
+Create a normalized relational database.
+
+Minimum entities should include:
+
+User
+Role
+Permission
+RolePermission
+UserPermission
+Department
+Company
+Job
+JobStatusHistory
+Sample
+Order
+OrderItem
+Invoice
+PaymentReceived
+Supplier
+Purchase
+PaymentMade
+LedgerEntry
+Advance
+DeliveryVoucher
+Notification
+AuditLog
+Attachment
+
+Design relations carefully.
+
+Use UUIDs or secure IDs internally.
+
+Use human-readable identifiers separately:
+
+JOB-260912-0001
+INV-260912-0001
+ORD-260912-0001
+
+Do not use human-readable numbers as primary keys.
+
+============================================================
+50. DATABASE RULES
+============================================================
+
+Use:
+
+- Foreign keys
+- Unique constraints
+- Indexes
+- Transactions
+- Proper nullable fields
+- createdAt
+- updatedAt
+
+for relevant entities.
+
+Add indexes for:
+
+jobNumber
+invoiceNumber
+companyId
+status
+createdAt
+dueDate
+
+etc.
+
+Use database transactions for multi-step financial operations.
+
+============================================================
+51. FINANCIAL INTEGRITY
+============================================================
+
+This is extremely important.
+
+Never calculate financial truth only from frontend state.
+
+The server/database is the source of truth.
+
+When payment is created:
+
+Use a database transaction.
+
+When payment is voided:
+
+Use a database transaction.
+
+When invoice totals change:
+
+Validate related records.
+
+Prevent:
+
+negative payment
+overpayment
+duplicate payment
+invalid invoice
+invalid company
+invalid references
+
+============================================================
+52. SECURITY
+============================================================
+
+Implement:
+
+- Password hashing
+- Secure sessions
+- Authorization middleware
+- Server-side permission checks
+- CSRF protection where applicable
+- Input validation
+- SQL injection protection through ORM
+- Rate limiting where practical
+- Secure headers
+- Environment variables
+- No secrets in source code
+
+Never expose:
+
+database credentials
+API secrets
+password hashes
+private configuration
+
+============================================================
+53. ENVIRONMENT CONFIGURATION
+============================================================
+
+Use environment variables.
+
+Example:
+
+DATABASE_URL
+AUTH_SECRET
+NEXTAUTH_URL
+etc.
+
+Create a clear .env.example.
+
+Do not hardcode secrets.
+
+============================================================
+54. SETTINGS SYSTEM
+============================================================
+
+Create:
+
+/settings
+
+Sections:
+
+Company information
+Departments
+Printing sections
+Job statuses
+Roles
+Permissions
+Notification preferences
+Financial settings
+Invoice settings
+System preferences
+
+Make important business configuration database-driven.
+
+For example:
+
+If tomorrow the factory adds:
+
+"Transfer Printing"
+
+MD should be able to add it from Settings.
+
+The system should then allow it in relevant job forms.
+
+No code change should be required.
+
+============================================================
+55. DEPARTMENT SYSTEM
+============================================================
+
+Departments should be database-driven.
+
+Initial:
+
+Reception
+Billing
+Accounting
+
+Future:
+
+Design
+Production
+QC
+Store
+Delivery
+HR
+Maintenance
+
+Department managers can be assigned.
+
+============================================================
+56. APPROVAL ENGINE
+============================================================
+
+Create a reusable approval architecture.
+
+Possible approvals:
+
+Sample approval
+Purchase approval
+Payment approval
+Expense approval
+Job cancellation
+Invoice cancellation
+
+Approval should record:
+
+Requested by
+Approved/rejected by
+Date
+Status
+Comment
+
+============================================================
+57. FILE ATTACHMENTS
+============================================================
+
+Jobs may need files.
+
+Architecture should support:
+
+Images
+PDF
+Artwork
+Documents
+
+Store metadata:
+
+file name
+type
+size
+uploaded by
+uploaded at
+entity
+entity ID
+
+Do not expose private files publicly without authorization.
+
+============================================================
+58. DASHBOARD PERSONALIZATION
+============================================================
+
+Each department should have its own dashboard.
+
+MD:
+
+Everything
+
+Reception:
+
+Jobs + delivery
+
+Billing:
+
+Orders + invoices + receivable
+
+Accounting:
+
+Cash + income + expenses + advances
+
+Future:
+
+Production dashboard
+Design dashboard
+QC dashboard
+Store dashboard
+
+Dashboard widgets should be modular.
+
+============================================================
+59. ACTIVITY FEED
+============================================================
+
+Create a reusable activity feed component.
+
+Example:
+
+[JOB]
+JOB-260912-0021 created by Rahim
+
+[STATUS]
+Moved to QC by Karim
+
+[PAYMENT]
+৳25,000 received from ABC Garments
+
+[USER]
+New Production Manager created
+
+============================================================
+60. UI COMPONENT SYSTEM
+============================================================
+
+Build reusable components.
+
+Examples:
+
+AppSidebar
+Topbar
+PageHeader
+StatCard
+StatusBadge
+PriorityBadge
+DataTable
+SearchBar
+FilterBar
+DateRangePicker
+Modal
+ConfirmDialog
+FormField
+EmptyState
+LoadingSkeleton
+ActivityTimeline
+JobPipeline
+MoneyDisplay
+PermissionGuard
+RoleBadge
+NotificationBell
+UserAvatar
+CommandSearch
+
+Do not duplicate UI code unnecessarily.
+
+============================================================
+61. ACCESS CONTROL IN UI
+============================================================
+
+Create reusable:
+
+<PermissionGuard />
+
+Example:
+
+If user does not have:
+
+CREATE_JOB
+
+do not show:
+
+"+ New Job"
+
+But remember:
+
+UI hiding is NOT security.
+
+Every API/server action must also verify permission.
+
+============================================================
+62. API / SERVER ARCHITECTURE
+============================================================
+
+Use clean separation.
+
+Business logic should not be scattered across UI components.
+
+Prefer:
+
+UI
+↓
+Server Action / API
+↓
+Service / Business Logic
+↓
+Prisma
+↓
+Database
+
+Create reusable service functions.
+
+Example:
+
+createJob()
+updateJobStatus()
+createInvoice()
+receivePayment()
+voidPayment()
+createUser()
+assignPermission()
+
+============================================================
+63. CODE QUALITY
+============================================================
+
+Use TypeScript strictly.
+
+Avoid:
+
+any
+
+unless genuinely necessary.
+
+Use:
+
+- reusable functions
+- clear naming
+- proper types
+- error boundaries
+- modular files
+- clean imports
+
+Do not create massive 2000-line components.
+
+Break complex pages into components.
+
+============================================================
+64. PROJECT STRUCTURE
+============================================================
+
+Use a scalable structure similar to:
+
+src/
+  app/
+    login/
+    dashboard/
+    md/
+    reception/
+    billing/
+    accounting/
+    admin/
+    settings/
+
+  components/
+    ui/
+    layout/
+    dashboard/
+    jobs/
+    billing/
+    accounting/
+    users/
+
+  lib/
+    auth/
+    db/
+    permissions/
+    validations/
+    utils/
+
+  services/
+    jobs/
+    billing/
+    accounting/
+    users/
+
+  types/
+
+  hooks/
+
+  config/
+
+  prisma/
+
+Adapt the exact structure to the chosen Next.js architecture.
+
+============================================================
+65. SEED DATA
+============================================================
+
+Create development seed data.
+
+Use fictional factory data.
+
+Example users:
+
+MD
+ADMIN
+Reception Manager
+Reception Staff
+Billing Officer
+Accountant
+
+Example companies:
+
+ABC Garments
+Fashion World
+Demo Textiles
+
+Example jobs.
+
+BUT:
+
+Clearly label seed/demo data.
+
+Never mix fake data with production data silently.
+
+============================================================
+66. DEFAULT ADMIN SETUP
+============================================================
+
+Create a secure initial setup mechanism.
+
+Do not hardcode publicly visible passwords into the UI.
+
+Prefer an environment-based setup or first-run admin creation.
+
+Example:
+
+ADMIN_EMAIL
+ADMIN_PASSWORD
+
+or a secure setup wizard.
+
+Force password change if a temporary password is used.
+
+============================================================
+67. FIRST-RUN EXPERIENCE
+============================================================
+
+If practical, create a setup flow:
+
+Step 1:
+Company information
+
+Step 2:
+Admin account
+
+Step 3:
+Departments
+
+Step 4:
+Printing sections
+
+Step 5:
+Roles
+
+Step 6:
+Finish
+
+Then redirect to dashboard.
+
+============================================================
+68. FACTORY WORKFLOW ENGINE
+============================================================
+
+Do not assume every job follows exactly the same workflow.
+
+Create configurable workflow stages.
+
+Example workflow:
+
+RECEIVED
+DESIGN
+SAMPLE
+PRODUCTION
+QC
+READY
+DELIVERY
+
+But a simple job may use:
+
+RECEIVED
+PRODUCTION
+QC
+READY
+DELIVERY
+
+The workflow should be configurable in future.
+
+============================================================
+69. JOB PRIORITY
+============================================================
+
+Support:
+
+LOW
+NORMAL
+HIGH
+URGENT
+
+Use clear visual badges.
+
+Urgent jobs should appear in:
+
+- MD dashboard
+- Department dashboard
+- Job list
+- Notifications
+
+============================================================
+70. DEADLINE MANAGEMENT
+============================================================
+
+Every relevant job can have:
+
+Expected delivery date
+
+System should calculate:
+
+On time
+Due today
+Overdue
+
+Show overdue jobs clearly.
+
+Do not allow the UI to become alarm-heavy.
+
+============================================================
+71. BUSINESS RULES
+============================================================
+
+Examples:
+
+Delivered quantity cannot exceed received quantity.
+
+Damaged quantity cannot exceed processed quantity.
+
+Payment cannot exceed invoice due unless explicitly configured.
+
+Invoice cannot be marked PAID if outstanding amount exists.
+
+Job cannot be DELIVERED if required QC has not passed,
+unless authorized override is used.
+
+Inactive users cannot log in.
+
+Unauthorized users cannot perform restricted actions.
+
+All overrides must be logged.
+
+============================================================
+72. MD OVERRIDE
+============================================================
+
+MD may need exceptional authority.
+
+Create controlled override functionality.
+
+Example:
+
+"Override QC restriction"
+
+Require:
+
+- confirmation
+- reason
+- MD/admin identity
+- audit log
+
+Never silently bypass business rules.
+
+============================================================
+73. SEARCHABLE EVERYTHING
+============================================================
+
+Where useful, make records searchable.
+
+Global search should find:
+
+Jobs
+Companies
+Invoices
+Orders
+Users
+
+Department-specific search should find relevant entities.
+
+============================================================
+74. PERFORMANCE
+============================================================
+
+The application must remain fast with thousands of jobs.
+
+Do not load entire database tables unnecessarily.
+
+Use:
+
+Pagination
+Server-side filtering
+Indexed queries
+Selective database fields
+Caching where useful
+Debounced search
+
+Avoid unnecessary client-side data fetching.
+
+============================================================
+75. MOBILE
+============================================================
+
+Reception staff may use phones/tablets.
+
+Make:
+
+New Job
+Job Detail
+Status Update
+Delivery
+Payment
+
+usable on small screens.
+
+============================================================
+76. DARK MODE
+============================================================
+
+Support Light Mode initially.
+
+Architecture should support Dark Mode later.
+
+Do not make dark mode mandatory everywhere if it reduces usability.
+
+============================================================
+77. ACCESSIBILITY
+============================================================
+
+Use:
+
+- proper labels
+- keyboard navigation
+- focus states
+- accessible dialogs
+- sufficient contrast
+- semantic HTML
+
+============================================================
+78. UX MICRO-INTERACTIONS
+============================================================
+
+Use subtle animations.
+
+Examples:
+
+Button feedback
+Card hover
+Modal transition
+Toast notification
+Page transition where appropriate
+
+Do NOT over-animate.
+
+The system should feel fast.
+
+============================================================
+79. EMPTY STATES
+============================================================
+
+Never show blank screens.
+
+Example:
+
+"No jobs found"
+
+Then show:
+
+"+ Create New Job"
+
+with a useful explanation.
+
+============================================================
+80. DEMO / DEVELOPMENT MODE
+============================================================
+
+During development, provide a way to test multiple roles.
+
+But do not weaken production security.
+
+Make it easy for the developer to switch between test accounts
+in development only.
+
+============================================================
+81. TESTING
+============================================================
+
+Before considering a module complete, test:
+
+Authentication
+Authorization
+Create
+Read
+Update
+Delete/void
+Validation
+Business rules
+Permission restrictions
+Database relations
+Error states
+Mobile layout
+
+Especially test financial calculations.
+
+============================================================
+82. CRITICAL SECURITY TESTS
+============================================================
+
+Test:
+
+Reception user attempts Accounting API.
+
+Must fail.
+
+Billing user attempts user creation.
+
+Must fail.
+
+Inactive user attempts login.
+
+Must fail.
+
+Unauthorized user attempts payment modification.
+
+Must fail.
+
+Never trust frontend role information.
+
+============================================================
+83. AUDIT TEST
+============================================================
+
+Whenever important data changes, verify audit logs are created.
+
+Examples:
+
+Job status change
+Payment creation
+Payment void
+User permission change
+Invoice cancellation
+
+============================================================
+84. DOCUMENTATION
+============================================================
+
+Create:
+
+README.md
+
+Include:
+
+- Project overview
+- Technology stack
+- Local development
+- Environment variables
+- Database setup
+- Prisma migration
+- Seed
+- Production deployment
+- User roles
+- Permission architecture
+- Module architecture
+- How to add a new department
+- How to add a new printing section
+- How to add a new permission
+- How to add a new workflow stage
+
+============================================================
+85. DEVELOPMENT STRATEGY
+============================================================
+
+DO NOT try to build the entire application blindly in one giant step.
+
+Follow this order:
+
+PHASE 1
+Architecture + database + authentication
+
+PHASE 2
+Global layout + design system
+
+PHASE 3
+User + role + permission system
+
+PHASE 4
+MD dashboard
+
+PHASE 5
+Reception + Jobs
+
+PHASE 6
+Billing + invoices + payments
+
+PHASE 7
+Accounting
+
+PHASE 8
+Reports + audit + notifications
+
+PHASE 9
+Printing/PDF
+
+PHASE 10
+Testing + security + performance + polish
+
+After each phase:
+
+1. Verify code
+2. Run application
+3. Fix errors
+4. Verify database
+5. Test permissions
+6. Test responsive UI
+7. Continue only when stable
+
+============================================================
+86. IMPORTANT REPLIT AGENT BEHAVIOR
+============================================================
+
+Before writing a large amount of code:
+
+First create a clear implementation plan.
+
+Then implement the architecture.
+
+Do not ask unnecessary questions if a reasonable assumption can be
+made.
+
+When there is an ambiguity:
+
+Choose the most scalable professional solution and document the
+assumption.
+
+Do not stop after creating UI mockups.
+
+Implement real functionality.
+
+Do not tell me:
+
+"I created a placeholder."
+
+when a real implementation is expected.
+
+============================================================
+87. NO FAKE FUNCTIONALITY
+============================================================
+
+Buttons must work.
+
+For example:
+
+"+ New Job"
+must open a real form.
+
+"Save"
+must save to database.
+
+"Change Status"
+must update the database.
+
+"Receive Payment"
+must create a real transaction.
+
+"Create User"
+must create a real account.
+
+"Assign Permission"
+must actually change authorization.
+
+"Logout"
+must destroy session.
+
+============================================================
+88. DATA RELATIONSHIP PRINCIPLE
+============================================================
+
+Avoid duplicate information.
+
+Example:
+
+Do not store company name independently in every financial table
+if it can be linked through companyId.
+
+Use relationships.
+
+Example:
+
+Company
+   |
+   +-- Jobs
+   +-- Orders
+   +-- Invoices
+   +-- Payments
+   +-- Samples
+
+Job
+   |
+   +-- Timeline
+   +-- Sample
+   +-- Production
+   +-- QC
+   +-- Delivery
+   +-- Order
+
+============================================================
+89. FINANCIAL REPORTING PRINCIPLE
+============================================================
+
+Separate:
+
+Revenue
+Payment received
+Expense
+Cost
+Profit
+Receivable
+Payable
+
+Do not incorrectly treat:
+
+Invoice = cash received
+
+Invoice means money owed/sold.
+
+Payment means actual money received.
+
+Keep accounting logic conceptually correct.
+
+============================================================
+90. MANAGEMENT INSIGHT
+============================================================
+
+The MD dashboard should not only show numbers.
+
+It should highlight useful information.
+
+Examples:
+
+"3 jobs are overdue."
+
+"ABC Garments has ৳120,000 outstanding."
+
+"Production has 8 jobs waiting."
+
+"Damage increased 12% this month."
+
+"Revenue is higher than last month."
+
+"5 invoices are overdue."
+
+Use concise insight cards.
+
+============================================================
+91. REPORT EXPORT
+============================================================
+
+When exporting data:
+
+Respect permissions.
+
+A Reception employee should not be able to export confidential
+financial information unless authorized.
+
+============================================================
+92. CONFIDENTIAL DATA
+============================================================
+
+Financial and employee data is sensitive.
+
+Only authorized roles should access:
+
+- Salary
+- Payroll
+- Profit
+- Expense
+- Receivable
+- Payable
+- Cash balance
+- Financial reports
+
+MD/Admin permissions should control this.
+
+============================================================
+93. FACTORY-FIRST LANGUAGE
+============================================================
+
+UI labels should be understandable by normal factory employees.
+
+Avoid unnecessary technical terms.
+
+Examples:
+
+Use:
+
+"New Job"
+
+instead of:
+
+"Create Entity"
+
+Use:
+
+"Receive Payment"
+
+instead of:
+
+"Create Transaction"
+
+Use:
+
+"Move to Production"
+
+instead of:
+
+"Transition State"
+
+============================================================
+94. BANGLADESH-FRIENDLY FINANCIAL UI
+============================================================
+
+Use BDT / ৳ for monetary display.
+
+Examples:
+
+৳25,000
+৳125,500.00
+
+Support date formatting suitable for Bangladesh.
+
+Keep date/time handling consistent.
+
+============================================================
+95. NUMBER FORMATTING
+============================================================
+
+Use human-friendly number formatting.
+
+Example:
+
+1,000
+10,500
+125,000
+
+Do not display raw database values unnecessarily.
+
+============================================================
+96. DASHBOARD RESPONSIVENESS
+============================================================
+
+Desktop MD dashboard:
+
+Use grid layout.
+
+Mobile:
+
+Stack important KPIs.
+
+Charts should resize correctly.
+
+Tables should not break the page.
+
+============================================================
+97. SIDEBAR BEHAVIOR
+============================================================
+
+Desktop:
+
+Collapsible sidebar.
+
+Expanded:
+Icon + text.
+
+Collapsed:
+Icon only with tooltip.
+
+Mobile:
+
+Drawer.
+
+Remember user preference where appropriate.
+
+============================================================
+98. TOP SEARCH / COMMAND
+============================================================
+
+If practical, add keyboard shortcut:
+
+Ctrl + K
+
+to open global search.
+
+Search should feel fast and professional.
+
+============================================================
+99. NOTIFICATION CENTER
+============================================================
+
+Topbar notification icon.
+
+Show:
+
+Unread count
+
+Click opens:
+
+Notification center.
+
+Each notification should navigate to the relevant record.
+
+============================================================
+100. FINAL QUALITY BAR
+============================================================
+
+The finished application must feel like something a real printing
+factory could use daily.
+
+It should NOT feel like a school project.
+
+It should NOT feel like a template.
+
+It should NOT rely on fake dashboard data.
+
+It should be:
+
+Fast
+Professional
+Reliable
+Secure
+Scalable
+Easy to use
+Beautiful
+Maintainable
+
+============================================================
+101. FIRST TASK FOR REPLIT
+============================================================
+
+Before implementing everything, do the following:
+
+STEP 1:
+Create the project.
+
+STEP 2:
+Create the database architecture.
+
+STEP 3:
+Create Prisma schema.
+
+STEP 4:
+Create migration.
+
+STEP 5:
+Create authentication architecture.
+
+STEP 6:
+Create permission architecture.
+
+STEP 7:
+Create base layout and design system.
+
+STEP 8:
+Create initial seed data.
+
+STEP 9:
+Create MD dashboard shell.
+
+STEP 10:
+Create Reception module.
+
+Then continue according to the phases above.
+
+============================================================
+102. DO NOT DESTROY WORKING CODE
+============================================================
+
+As development continues:
+
+Do not unnecessarily rewrite working modules.
+
+Before modifying shared components:
+
+Check where they are used.
+
+Avoid breaking existing functionality.
+
+When changing database schema:
+
+Create proper migration.
+
+Do not casually delete production data.
+
+============================================================
+103. FINAL DELIVERABLE
+============================================================
+
+At the end, provide:
+
+1. Working web application
+2. Complete database schema
+3. Authentication
+4. Role system
+5. Permission system
+6. MD dashboard
+7. Reception module
+8. Billing module
+9. Accounting module
+10. User management
+11. Audit logs
+12. Notifications
+13. Reports architecture
+14. Responsive UI
+15. Seed/demo data
+16. README
+17. Environment configuration
+18. Deployment instructions
+
+============================================================
+104. MOST IMPORTANT PRINCIPLE
+============================================================
+
+Think about this application as a real Factory Operating System.
+
+Do not think:
+
+"I need to create some pages."
+
+Think:
+
+"I need to create a connected operational system where people,
+jobs, departments, money and management information flow through
+one reliable source of truth."
+
+Every module must connect logically.
+
+Every important action must be traceable.
+
+Every permission must be enforceable.
+
+Every financial operation must be safe.
+
+Every future department must be easy to add.
+
+============================================================
+105. START NOW
+============================================================
+
+Start by creating the architecture and implementation plan.
+
+Then build the application phase by phase.
+
+Do not wait for additional instructions unless something is genuinely
+impossible to determine.
+
+Use sensible professional assumptions.
+
+Prioritize:
+
+1. Architecture
+2. Security
+3. Database integrity
+4. Workflow correctness
+5. UX
+6. Visual polish
+
+The final result should be a premium, production-ready
+ZM PRINTING & DESIGN LTD Factory Management Web Application.

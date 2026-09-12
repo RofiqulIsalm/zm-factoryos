@@ -1,0 +1,1577 @@
+# ZM FACTORYOS
+
+## MASTER MD ACCOUNT + USER ACCOUNT MANAGEMENT & SECURITY SYSTEM
+
+Add a secure and professional account architecture to the ZM FactoryOS application.
+
+This requirement is CRITICAL.
+
+The system must have one initial Master MD account that controls the creation and management of all other application users.
+
+Do NOT create a system where every employee can independently register.
+
+There must be NO public registration page.
+
+Only authorized MD/Admin users can create employee accounts.
+
+============================================================
+
+1. MASTER MD ACCOUNT
+   ============================================================
+
+When the application is initially installed, create ONE Master MD account through a secure first-run setup or environment-based initialization.
+
+The Master MD account represents:
+
+Managing Director / MD
+
+The Master MD account must have the highest level of application authority.
+
+Example initial credentials for development only:
+
+Username:
+MD
+
+Password:
+A secure temporary password supplied during setup.
+
+IMPORTANT:
+
+Do NOT hardcode a real production password into source code.
+
+Do NOT display the Master MD password publicly.
+
+Do NOT expose it in the frontend.
+
+For development, credentials may be configured through environment variables or a secure first-run setup.
+
+Example:
+
+INITIAL_MD_USERNAME
+INITIAL_MD_PASSWORD
+
+The application should require the MD to change the temporary password after first login.
+
+============================================================
+2. NO PUBLIC SIGNUP
+===================
+
+There must NOT be:
+
+/signup
+
+for normal employees.
+
+Employees cannot create their own accounts.
+
+The system must operate like:
+
+MASTER MD
+↓
+CREATE USER
+↓
+ASSIGN DEPARTMENT
+↓
+ASSIGN ROLE
+↓
+ASSIGN PERMISSIONS
+↓
+USER CAN LOGIN
+
+============================================================
+3. MD LOGIN
+===========
+
+Create a professional login page.
+
+Fields:
+
+Username or Email
+Password
+
+Button:
+
+Login
+
+Optional:
+
+Show/Hide password
+
+Remember session if implemented securely.
+
+After successful MD login:
+
+Redirect to:
+
+/md
+
+or the configured MD dashboard.
+
+============================================================
+4. MASTER MD AUTHORITY
+======================
+
+The Master MD can:
+
+* View all departments
+* View all users
+* Create users
+* Edit users
+* Activate users
+* Deactivate users
+* Change user username
+* Change user email
+* Change user password
+* Change user department
+* Change user role
+* Assign permissions
+* Remove permissions
+* View user activity
+* View login activity
+* Force password reset
+* Lock/unlock accounts
+* View audit logs
+
+The MD can also access every business module according to the
+highest permission level.
+
+============================================================
+5. USER CREATION
+================
+
+Create:
+
+/md/users
+
+and optionally:
+
+/admin/users
+
+depending on the permission architecture.
+
+Primary button:
+
+* Create New User
+
+User creation form:
+
+Full Name
+Employee ID
+Username
+Email
+Phone
+Department
+Role
+Temporary Password
+Confirm Password
+Status
+Permissions
+
+Example:
+
+Name:
+Rahim Ahmed
+
+Employee ID:
+EMP-0001
+
+Username:
+rahim
+
+Department:
+Reception
+
+Role:
+Reception Staff
+
+Temporary Password:
+
+---
+
+Status:
+Active
+
+Then:
+
+CREATE USER
+
+After successful creation:
+
+Show:
+
+"User account created successfully."
+
+Do NOT display the password permanently.
+
+============================================================
+6. USERNAME RULES
+=================
+
+Usernames must be unique.
+
+The database must enforce uniqueness.
+
+Do not allow:
+
+two users with the same username.
+
+Username should be normalized where appropriate.
+
+Example:
+
+rahim
+Rahim
+
+should not accidentally create two accounts if the application
+treats usernames case-insensitively.
+
+============================================================
+7. PASSWORD SECURITY
+====================
+
+Passwords must NEVER be stored as plain text.
+
+Use:
+
+Argon2
+
+or
+
+bcrypt
+
+with appropriate security settings.
+
+The database should store only password hashes.
+
+Never return password hashes through API responses.
+
+Never show password hashes in the frontend.
+
+============================================================
+8. PASSWORD CREATION
+====================
+
+When MD creates an employee account, MD may set a temporary password.
+
+The system should support:
+
+"Require password change on first login"
+
+If enabled:
+
+User logs in with temporary password.
+
+System redirects to:
+
+/change-password
+
+The user must create a new password.
+
+Then the account becomes normal.
+
+============================================================
+9. MD CHANGING EMPLOYEE PASSWORD
+================================
+
+MD can open:
+
+User → Edit → Security
+
+Options:
+
+Reset Password
+
+MD can generate/set a temporary password.
+
+After reset:
+
+Force the employee to change password on next login.
+
+Show:
+
+"Password reset successfully. User must create a new password at next login."
+
+Never reveal the existing password to MD.
+
+MD can RESET the password.
+
+MD cannot VIEW the old password.
+
+============================================================
+10. MD CHANGING EMPLOYEE USERNAME
+=================================
+
+MD can change:
+
+Username
+
+But:
+
+Username must remain unique.
+
+When changed:
+
+Create an audit log.
+
+Example:
+
+MD changed username:
+
+rahim
+
+→
+
+rahim.reception
+
+Record:
+
+Changed by:
+MD
+
+Old username:
+rahim
+
+New username:
+rahim.reception
+
+Date/time:
+automatic
+
+============================================================
+11. MD CHANGING USER ROLE
+=========================
+
+MD can change:
+
+Reception Staff
+
+→
+
+Reception Manager
+
+or:
+
+Billing Staff
+
+→
+
+Billing Manager
+
+or:
+
+Production Staff
+
+→
+
+Production Manager
+
+etc.
+
+Changing a role must immediately affect permissions.
+
+However, preserve any explicit user-specific permissions according
+to the permission architecture.
+
+Show a confirmation dialog:
+
+"Changing this role may change the user's access to multiple
+modules. Continue?"
+
+============================================================
+12. MD CHANGING DEPARTMENT
+==========================
+
+MD can move a user between departments.
+
+Example:
+
+Reception
+→
+Billing
+
+When changing department:
+
+Show warning:
+
+"This will change the user's department access and may affect
+their available permissions."
+
+MD must confirm.
+
+Create an audit record.
+
+============================================================
+13. USER STATUS
+===============
+
+Each account has:
+
+ACTIVE
+INACTIVE
+LOCKED
+
+ACTIVE:
+
+Can login.
+
+INACTIVE:
+
+Cannot login.
+
+LOCKED:
+
+Cannot login until authorized user unlocks the account.
+
+Do not delete employee accounts unnecessarily.
+
+Prefer:
+
+Deactivate
+
+instead of permanent deletion.
+
+This preserves historical activity and audit records.
+
+============================================================
+14. USER DETAIL PAGE
+====================
+
+Create:
+
+/md/users/[id]
+
+Show:
+
+Profile
+Employee ID
+Username
+Email
+Phone
+Department
+Role
+Status
+Created date
+Last login
+Last activity
+
+Security:
+
+Reset password
+Force password change
+Activate
+Deactivate
+Lock
+Unlock
+
+Permissions:
+
+View assigned permissions.
+
+Activity:
+
+Show recent actions.
+
+============================================================
+15. MASTER MD SECURITY
+======================
+
+The Master MD account must be protected more strongly than ordinary
+accounts.
+
+The system must NOT allow:
+
+Reception user
+Billing user
+Accounting user
+Production user
+
+to modify the Master MD account.
+
+Only the Master MD or explicitly authorized highest-level
+administrator can perform sensitive MD account operations.
+
+============================================================
+16. CAN MD CHANGE MD PASSWORD?
+==============================
+
+YES.
+
+The MD should be able to change their own password.
+
+Create:
+
+/profile/security
+
+or:
+
+/md/settings/security
+
+Fields:
+
+Current Password
+New Password
+Confirm New Password
+
+Require the current password before changing it.
+
+After password change:
+
+Invalidate existing sessions if appropriate.
+
+Require login again if necessary.
+
+Create audit log:
+
+MD changed own password.
+
+Do NOT log the actual password.
+
+============================================================
+17. MD USERNAME CHANGE
+======================
+
+Allow MD to change their own username only after confirmation.
+
+Require:
+
+Current password
+
+New username
+
+Confirmation
+
+Then:
+
+Update username.
+
+Create audit log.
+
+Do not store old password or sensitive authentication data in the
+audit log.
+
+============================================================
+18. MASTER ACCOUNT RECOVERY
+===========================
+
+Do NOT create an unsafe "forgot password" mechanism.
+
+If password recovery is implemented:
+
+Use a secure reset-token system.
+
+Reset tokens must:
+
+* be random
+* expire
+* be single-use
+* never be stored in plain form if practical
+
+For production deployment, support secure email-based password reset
+if email infrastructure is configured.
+
+If email is not configured, provide a secure administrator recovery
+procedure rather than exposing a secret reset URL publicly.
+
+============================================================
+19. SESSION SECURITY
+====================
+
+Use secure server-side authentication/session handling.
+
+After login:
+
+Create authenticated session.
+
+Protect routes.
+
+Examples:
+
+/md
+/md/users
+/accounting
+/billing
+/reception
+
+must require authentication.
+
+If session expires:
+
+Redirect to login.
+
+Do not allow browser back navigation to expose sensitive data after
+logout where practical.
+
+============================================================
+20. SERVER-SIDE AUTHORIZATION
+=============================
+
+THIS IS CRITICAL.
+
+Do NOT rely only on frontend route hiding.
+
+Example:
+
+Even if a Reception employee manually enters:
+
+/md/users
+
+the server must reject access.
+
+Similarly, if a user calls a protected API manually:
+
+POST /api/users
+
+the server must verify:
+
+authenticated user
++
+permission
++
+role
++
+account status
+
+before performing the operation.
+
+============================================================
+21. MASTER MD ROLE
+==================
+
+Create a clear distinction between:
+
+MASTER_MD
+
+and
+
+NORMAL_MD / ADMIN
+
+if the application architecture needs it.
+
+MASTER_MD is the initial highest authority.
+
+Do not accidentally allow a normal Admin to create another
+Master MD.
+
+There should normally be only ONE Master MD account unless the
+system explicitly supports secure ownership transfer.
+
+============================================================
+22. MASTER MD PROTECTION
+========================
+
+The system must prevent accidental deletion of the Master MD.
+
+Do NOT show:
+
+Delete Master MD
+
+as a normal button.
+
+Instead, the Master MD can only be:
+
+updated
+password-changed
+username-changed
+secured
+
+through protected operations.
+
+============================================================
+23. USER PERMISSION MANAGEMENT
+==============================
+
+Create a permission matrix.
+
+Example permissions:
+
+Dashboard:
+VIEW_DASHBOARD
+
+Jobs:
+VIEW_JOBS
+CREATE_JOB
+EDIT_JOB
+DELETE_JOB
+UPDATE_JOB_STATUS
+APPROVE_JOB
+
+Clients:
+VIEW_CLIENTS
+CREATE_CLIENT
+EDIT_CLIENT
+
+Billing:
+VIEW_BILLING
+CREATE_ORDER
+EDIT_ORDER
+CREATE_INVOICE
+VIEW_INVOICE
+RECEIVE_PAYMENT
+VIEW_RECEIVABLE
+
+Accounting:
+VIEW_ACCOUNTING
+CREATE_EXPENSE
+CREATE_INCOME
+VIEW_LEDGER
+MANAGE_ADVANCE
+
+Reports:
+VIEW_REPORTS
+EXPORT_REPORTS
+PRINT_REPORTS
+
+Users:
+VIEW_USERS
+CREATE_USER
+EDIT_USER
+CHANGE_USER_PASSWORD
+ASSIGN_ROLE
+ASSIGN_PERMISSION
+ACTIVATE_USER
+DEACTIVATE_USER
+VIEW_AUDIT_LOG
+
+Settings:
+VIEW_SETTINGS
+EDIT_SETTINGS
+
+============================================================
+24. ROLE + PERMISSION MODEL
+===========================
+
+Use:
+
+USER
+ROLE
+PERMISSION
+ROLE_PERMISSION
+USER_PERMISSION
+
+Architecture:
+
+User
+↓
+Role
+↓
+Role Permissions
+
+PLUS:
+
+User
+↓
+Direct Permissions
+
+This allows:
+
+Role-level permissions
+
+AND
+
+special user-level permissions.
+
+============================================================
+25. EXAMPLE USER
+================
+
+User:
+
+Rahim Ahmed
+
+Department:
+
+Reception
+
+Role:
+
+Reception Staff
+
+Role permissions:
+
+VIEW_JOBS
+CREATE_JOB
+EDIT_JOB
+VIEW_CLIENTS
+
+Direct permissions:
+
+PRINT_JOB_CARD
+
+Final access:
+
+VIEW_JOBS
+CREATE_JOB
+EDIT_JOB
+VIEW_CLIENTS
+PRINT_JOB_CARD
+
+============================================================
+26. EXAMPLE MANAGER
+===================
+
+User:
+
+Karim Ahmed
+
+Department:
+
+Production
+
+Role:
+
+Production Manager
+
+Permissions:
+
+VIEW_PRODUCTION
+ASSIGN_PRODUCTION
+UPDATE_PRODUCTION
+VIEW_PRODUCTION_REPORTS
+APPROVE_PRODUCTION
+
+He should NOT automatically receive:
+
+VIEW_PAYROLL
+MANAGE_USERS
+
+unless explicitly granted.
+
+============================================================
+27. MD USER MANAGEMENT UI
+=========================
+
+Make the user management screen visually excellent.
+
+Top:
+
+Users
+
+Subtitle:
+
+Manage factory employees, roles and access.
+
+Button:
+
+* New User
+
+Stats:
+
+Total Users
+Active Users
+Inactive Users
+Locked Users
+
+Table:
+
+Name
+Employee ID
+Username
+Department
+Role
+Status
+Last Login
+Actions
+
+Actions:
+
+View
+Edit
+Permissions
+Reset Password
+Activate/Deactivate
+
+============================================================
+28. USER SEARCH
+===============
+
+Search users by:
+
+Name
+Employee ID
+Username
+Email
+Phone
+
+Filters:
+
+Department
+Role
+Status
+
+============================================================
+29. AUDIT LOG FOR ACCOUNT MANAGEMENT
+====================================
+
+Every sensitive account action must create an audit log.
+
+Examples:
+
+MD created user
+
+MD changed user password
+
+MD changed user role
+
+MD changed user department
+
+MD changed username
+
+MD activated account
+
+MD deactivated account
+
+MD locked account
+
+MD unlocked account
+
+MD changed own password
+
+MD changed permissions
+
+Audit record:
+
+Actor
+Action
+Target User
+Old Value
+New Value
+Timestamp
+Reason where appropriate
+
+NEVER log:
+
+password
+password hash
+reset token
+session token
+
+============================================================
+30. SECURITY CONFIRMATION FOR SENSITIVE ACTIONS
+===============================================
+
+For:
+
+Reset Password
+Change Role
+Deactivate User
+Delete/Void financial access
+Change critical permissions
+
+show confirmation dialog.
+
+For extremely sensitive actions, require MD's current password again.
+
+Example:
+
+"Confirm with your current password"
+
+============================================================
+31. USER ACCOUNT ACTIVITY
+=========================
+
+User detail page should show:
+
+Last login
+Login count if implemented
+Recent actions
+Recent jobs
+Recent updates
+
+Example:
+
+Rahim logged in
+09:02 AM
+
+Rahim created JOB-260912-0045
+09:15 AM
+
+Rahim updated JOB-260912-0045
+09:32 AM
+
+============================================================
+32. ACCOUNT LOCKOUT
+===================
+
+Implement protection against repeated failed login attempts.
+
+Example behavior:
+
+After several failed attempts:
+
+Temporarily lock login attempts.
+
+Do not reveal whether username exists.
+
+Example:
+
+"Invalid username or password."
+
+After lock:
+
+Require timeout or authorized unlock.
+
+============================================================
+33. LOGIN ACTIVITY
+==================
+
+Where practical, maintain:
+
+User
+Login time
+Logout time if available
+Success/failure
+IP metadata
+Device/browser metadata
+
+Use this carefully and securely.
+
+Do not expose unnecessary sensitive technical information to normal
+employees.
+
+MD/Admin may view security activity according to permissions.
+
+============================================================
+34. ADMIN VS MD
+===============
+
+The system must clearly define authority.
+
+MD:
+
+Business + Management + User Control
+
+ADMIN:
+
+Technical/System Administration according to configured permissions.
+
+Do NOT automatically give every Admin unrestricted access to
+financial or Master MD controls.
+
+The permission system is the source of truth.
+
+============================================================
+35. FIRST LOGIN FLOW
+====================
+
+First installation:
+
+1. Secure setup creates Master MD.
+2. MD logs in.
+3. MD is prompted to change temporary password.
+4. MD completes company setup.
+5. MD creates departments.
+6. MD creates employee accounts.
+7. MD assigns roles.
+8. MD assigns permissions.
+9. Employees receive their credentials.
+10. Employees login.
+11. Employees change temporary passwords.
+
+============================================================
+36. EMPLOYEE LOGIN FLOW
+=======================
+
+Employee receives:
+
+Username
+Temporary password
+
+Employee logs in.
+
+If:
+
+mustChangePassword = true
+
+redirect:
+
+/change-password
+
+After successful password change:
+
+redirect to their department dashboard.
+
+Example:
+
+Reception user
+→
+/reception
+
+Billing user
+→
+/billing
+
+Accounting user
+→
+/accounting
+
+Production user
+→
+/production
+
+MD
+→
+/md
+
+============================================================
+37. ACCOUNT STATUS CHECK
+========================
+
+Every authenticated request should verify that the account is still
+active.
+
+If MD deactivates a user:
+
+The user should no longer be allowed to continue accessing protected
+operations.
+
+Where practical, invalidate active sessions.
+
+============================================================
+38. NO SHARED EMPLOYEE ACCOUNTS
+===============================
+
+Do NOT create accounts like:
+
+reception@factory
+
+for multiple people.
+
+Each person must have their own account.
+
+Reason:
+
+The audit system must know exactly WHO performed an action.
+
+Correct:
+
+rahim
+karim
+salma
+
+Incorrect:
+
+reception
+
+============================================================
+39. EMPLOYEE ID
+===============
+
+Give every employee a unique Employee ID.
+
+Example:
+
+EMP-0001
+EMP-0002
+EMP-0003
+
+Employee ID must be unique.
+
+This is separate from:
+
+Username
+
+and separate from:
+
+Database UUID.
+
+============================================================
+40. ACCOUNT TRANSFER / EMPLOYEE EXIT
+====================================
+
+When an employee leaves the company:
+
+Do NOT delete the account immediately.
+
+Set:
+
+INACTIVE
+
+Preserve:
+
+historical jobs
+financial records
+audit logs
+activity
+
+This maintains accountability.
+
+============================================================
+41. UI SECURITY PRINCIPLE
+=========================
+
+Do not show employees controls they cannot use.
+
+Example:
+
+Reception user:
+
+NO "User Management"
+
+NO "Accounting"
+
+NO "MD Dashboard"
+
+But:
+
+The server must ALSO reject unauthorized requests.
+
+============================================================
+42. MASTER MD DASHBOARD USER WIDGET
+===================================
+
+On MD dashboard, show:
+
+Users
+
+Total:
+25
+
+Active:
+22
+
+Inactive:
+3
+
+Pending password changes:
+2
+
+Click:
+
+Manage Users
+
+============================================================
+43. MD QUICK ACTIONS
+====================
+
+MD dashboard should include:
+
+* Create User
+* Create Department
+* Manage Permissions
+  View Audit Logs
+  View Security Activity
+
+============================================================
+44. PERMISSION EDITOR UI
+========================
+
+Create a professional permission management screen.
+
+Group permissions:
+
+Dashboard
+Jobs
+Clients
+Design
+Production
+QC
+Delivery
+Billing
+Accounting
+Inventory
+Reports
+Users
+Settings
+
+Each group:
+
+[✓] View
+[✓] Create
+[ ] Edit
+[ ] Delete
+[✓] Print
+[ ] Export
+[ ] Approve
+
+Use checkboxes/toggles.
+
+Provide:
+
+Select All
+Clear All
+
+with confirmation where necessary.
+
+============================================================
+45. ROLE MANAGEMENT
+===================
+
+Allow MD/Admin with appropriate permission to create roles.
+
+Example:
+
+Production Supervisor
+
+Then assign:
+
+VIEW_PRODUCTION
+UPDATE_PRODUCTION
+VIEW_QC
+
+This allows the system to grow without code changes.
+
+============================================================
+46. DATABASE REQUIREMENTS
+=========================
+
+At minimum support:
+
+User
+Role
+Permission
+RolePermission
+UserPermission
+Department
+AuditLog
+LoginActivity
+PasswordResetToken
+Session
+
+Use proper relationships and indexes.
+
+Do not store passwords in plaintext.
+
+============================================================
+47. SECURITY DATABASE RULES
+===========================
+
+Unique:
+
+username
+email if required
+employeeId
+
+Use:
+
+createdAt
+updatedAt
+lastLoginAt
+isActive
+mustChangePassword
+
+where appropriate.
+
+============================================================
+48. MASTER MD ENVIRONMENT SETUP
+===============================
+
+For first deployment:
+
+Provide a secure mechanism to initialize Master MD.
+
+Example:
+
+INITIAL_MD_USERNAME
+INITIAL_MD_PASSWORD
+
+The seed/setup process should:
+
+1. Check if Master MD already exists.
+2. If not, create it.
+3. Hash password securely.
+4. Assign MASTER_MD role.
+5. Assign all required permissions.
+6. Mark as system owner.
+
+If Master MD already exists:
+
+Do NOT create another one automatically.
+
+============================================================
+49. DO NOT HARD-CODE AUTHORIZATION
+==================================
+
+Avoid code like:
+
+if (email === "[md@example.com](mailto:md@example.com)") {
+allowEverything();
+}
+
+Instead use:
+
+authenticated user
+→
+role
+→
+permissions
+→
+authorization service
+
+The Master MD status may be represented by a protected system role
+or account flag.
+
+============================================================
+50. AUTHORIZATION SERVICE
+=========================
+
+Create reusable functions such as:
+
+hasPermission(userId, permission)
+
+requirePermission(userId, permission)
+
+isMasterMD(userId)
+
+canManageUser(actorId, targetUserId)
+
+canChangePassword(actorId, targetUserId)
+
+canAssignRole(actorId, roleId)
+
+Use these consistently.
+
+============================================================
+51. FINAL SECURITY RULE
+=======================
+
+Never trust:
+
+Frontend
+URL
+query parameter
+hidden button
+localStorage
+client-side role
+
+The server/database must determine:
+
+WHO is logged in
+WHAT role they have
+WHAT permissions they have
+WHETHER the account is active
+WHETHER the requested operation is allowed
+
+============================================================
+52. FINAL USER EXPERIENCE
+=========================
+
+The entire account system should feel simple.
+
+MD sees:
+
+Users
+↓
+
+* Create User
+  ↓
+  Fill information
+  ↓
+  Choose Department
+  ↓
+  Choose Role
+  ↓
+  Review Permissions
+  ↓
+  Create
+  ↓
+  Employee can login
+
+Employee sees:
+
+Login
+↓
+Change temporary password
+↓
+Department Dashboard
+↓
+Work
+
+============================================================
+53. FINAL ACCEPTANCE CRITERIA
+=============================
+
+The account system is NOT complete until all of these work:
+
+[ ] Master MD can login
+[ ] No public employee signup
+[ ] MD can create user
+[ ] MD can edit user
+[ ] MD can change username
+[ ] MD can reset password
+[ ] MD cannot see existing password
+[ ] User can change own password
+[ ] MD can activate/deactivate user
+[ ] MD can lock/unlock user
+[ ] MD can change department
+[ ] MD can change role
+[ ] MD can assign permissions
+[ ] User-specific permissions work
+[ ] Server-side authorization works
+[ ] Unauthorized URL access is blocked
+[ ] Audit logs work
+[ ] Login activity works
+[ ] Passwords are hashed
+[ ] Master MD cannot be accidentally deleted
+[ ] Inactive users cannot login
+[ ] Temporary passwords can force password change
+[ ] Sessions are securely handled
+[ ] Sensitive account actions require confirmation
+[ ] Financial permissions are protected
+[ ] Master MD controls remain protected
+
+============================================================
+54. IMPLEMENTATION INSTRUCTION
+==============================
+
+Build this as a real production-quality authentication and user
+management system.
+
+Do not make a visual-only mockup.
+
+Create:
+
+* database schema
+* migrations
+* authentication
+* authorization
+* APIs/server actions
+* UI
+* forms
+* validation
+* audit logs
+* security checks
+* error handling
+* loading states
+* responsive UI
+
+Test the entire flow.
+
+============================================================
+55. IMPORTANT
+=============
+
+The Master MD account is the root management identity of the
+application.
+
+The architecture must be designed so that:
+
+ONE FACTORY
+↓
+ONE MASTER MD
+↓
+MANY DEPARTMENTS
+↓
+MANY EMPLOYEES
+↓
+INDIVIDUAL ACCOUNTS
+↓
+ROLE + CUSTOM PERMISSIONS
+↓
+CONTROLLED ACCESS
+
+This architecture must integrate cleanly with:
+
+Reception
+Billing
+Accounting
+Design
+Production
+QC
+Delivery
+Inventory
+HR
+Reports
+and all future ZM FactoryOS modules.
+
+Build it securely, professionally and in a way that can scale for
+the long-term operation of ZM Printing & Design Ltd.

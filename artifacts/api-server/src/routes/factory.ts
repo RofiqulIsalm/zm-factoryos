@@ -1,5 +1,4 @@
 import { Router, type IRouter } from "express";
-import { getAuth } from "@clerk/express";
 import { and, asc, count, desc, eq, ilike, or, sql } from "drizzle-orm";
 import {
   db,
@@ -67,10 +66,12 @@ import {
   ListAuditLogsResponse,
   GetSettingsCatalogsResponse,
 } from "@workspace/api-zod";
-import { requireAuth } from "../middlewares/auth";
+import { getAuthenticatedUser, hashPassword, requireAuth, requireMaster } from "../middlewares/auth";
 
 const router: IRouter = Router();
 router.use(requireAuth);
+router.use("/users", requireMaster);
+router.use("/audit-logs", requireMaster);
 
 const today = () => new Date().toISOString().slice(0, 10);
 const calendarDate = (value: Date | string) => value instanceof Date ? value.toISOString().slice(0, 10) : value;
@@ -84,23 +85,9 @@ const pageData = (page: number, pageSize: number, total: number) => ({
 });
 
 async function getActor(req: Parameters<typeof requireAuth>[0]): Promise<{ id: string; name: string }> {
-  const auth = getAuth(req);
-  const clerkUserId = auth?.userId;
-  if (!clerkUserId) throw new Error("Authentication required");
-  const existing = await db.select().from(usersTable).where(eq(usersTable.clerkUserId, clerkUserId)).limit(1);
-  if (existing[0]) return { id: existing[0].id, name: existing[0].name };
-  const claimRecord = (auth.sessionClaims ?? {}) as Record<string, unknown>;
-  const name = typeof claimRecord.name === "string" ? claimRecord.name : "Factory Operator";
-  const email = typeof claimRecord.email === "string" ? claimRecord.email : `${clerkUserId}@factoryos.local`;
-  const [created] = await db.insert(usersTable).values({
-    clerkUserId,
-    name,
-    email,
-    department: "Management",
-    role: "MD",
-    permissions: ["*"],
-  }).returning();
-  return { id: created.id, name: created.name };
+  const user = await getAuthenticatedUser(req);
+  if (!user) throw new Error("Authentication required");
+  return { id: user.id, name: user.name };
 }
 
 async function companyName(companyId: string): Promise<string> {
@@ -513,9 +500,16 @@ router.post("/users", async (req, res): Promise<void> => {
     return;
   }
   const actor = await getActor(req);
-  const [user] = await db.insert(usersTable).values(parsed.data).returning();
+  const { temporaryPassword, ...userData } = parsed.data;
+  const [user] = await db.insert(usersTable).values({
+    ...userData,
+    username: parsed.data.username.toLowerCase(),
+    passwordHash: await hashPassword(temporaryPassword),
+    mustChangePassword: true,
+    role: parsed.data.role,
+  }).returning();
   await db.insert(auditLogsTable).values({ userId: actor.id, userName: actor.name, action: "USER_CREATED", entity: "USER", entityId: user.id, newValue: user.email });
-  res.status(201).json(CreateUserResponse.parse({ ...user, lastLogin: null, createdAt: dateTime(user.createdAt) }));
+  res.status(201).json(CreateUserResponse.parse({ ...user, passwordHash: undefined, lastLogin: null, createdAt: dateTime(user.createdAt) }));
 });
 
 router.get("/notifications", async (req, res): Promise<void> => {

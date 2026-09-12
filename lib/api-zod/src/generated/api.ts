@@ -22,6 +22,7 @@ export const HealthCheckResponse = zod.object({
  */
 export const GetCurrentUserResponse = zod.object({
   "id": zod.string().uuid(),
+  "username": zod.string(),
   "name": zod.string(),
   "employeeId": zod.string().nullish(),
   "email": zod.string().email(),
@@ -29,6 +30,8 @@ export const GetCurrentUserResponse = zod.object({
   "department": zod.string(),
   "role": zod.string(),
   "active": zod.boolean(),
+  "status": zod.enum(['ACTIVE', 'INACTIVE', 'LOCKED']),
+  "mustChangePassword": zod.boolean(),
   "permissions": zod.array(zod.string()).optional(),
   "lastLogin": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date()
@@ -819,6 +822,7 @@ export const ListUsersQueryParams = zod.object({
 export const ListUsersResponse = zod.object({
   "items": zod.array(zod.object({
   "id": zod.string().uuid(),
+  "username": zod.string(),
   "name": zod.string(),
   "employeeId": zod.string().nullish(),
   "email": zod.string().email(),
@@ -826,6 +830,8 @@ export const ListUsersResponse = zod.object({
   "department": zod.string(),
   "role": zod.string(),
   "active": zod.boolean(),
+  "status": zod.enum(['ACTIVE', 'INACTIVE', 'LOCKED']),
+  "mustChangePassword": zod.boolean(),
   "permissions": zod.array(zod.string()).optional(),
   "lastLogin": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date()
@@ -843,20 +849,27 @@ export const ListUsersResponse = zod.object({
  * @summary Create a factory user
  */
 
+export const createUserBodyUsernameMin = 3;
+
+export const createUserBodyTemporaryPasswordMin = 10;
+
 
 
 export const CreateUserBody = zod.object({
   "name": zod.string().min(1),
+  "username": zod.string().min(createUserBodyUsernameMin),
   "employeeId": zod.string().optional(),
   "email": zod.string().email(),
   "phone": zod.string().optional(),
   "department": zod.string(),
   "role": zod.string(),
+  "temporaryPassword": zod.string().min(createUserBodyTemporaryPasswordMin),
   "permissions": zod.array(zod.string()).optional()
 })
 
 export const CreateUserResponse = zod.object({
   "id": zod.string().uuid(),
+  "username": zod.string(),
   "name": zod.string(),
   "employeeId": zod.string().nullish(),
   "email": zod.string().email(),
@@ -864,6 +877,8 @@ export const CreateUserResponse = zod.object({
   "department": zod.string(),
   "role": zod.string(),
   "active": zod.boolean(),
+  "status": zod.enum(['ACTIVE', 'INACTIVE', 'LOCKED']),
+  "mustChangePassword": zod.boolean(),
   "permissions": zod.array(zod.string()).optional(),
   "lastLogin": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date()

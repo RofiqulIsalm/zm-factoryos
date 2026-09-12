@@ -328,8 +328,18 @@ export interface LedgerList {
   balance: number;
 }
 
+export type UserStatus = typeof UserStatus[keyof typeof UserStatus];
+
+
+export const UserStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  LOCKED: 'LOCKED',
+} as const;
+
 export interface User {
   id: string;
+  username: string;
   name: string;
   /** @nullable */
   employeeId?: string | null;
@@ -339,6 +349,8 @@ export interface User {
   department: string;
   role: string;
   active: boolean;
+  status: UserStatus;
+  mustChangePassword: boolean;
   permissions?: string[];
   /** @nullable */
   lastLogin?: string | null;
@@ -348,11 +360,15 @@ export interface User {
 export interface UserInput {
   /** @minLength 1 */
   name: string;
+  /** @minLength 3 */
+  username: string;
   employeeId?: string;
   email: string;
   phone?: string;
   department: string;
   role: string;
+  /** @minLength 10 */
+  temporaryPassword: string;
   permissions?: string[];
 }
 

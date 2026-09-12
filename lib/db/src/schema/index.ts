@@ -53,6 +53,7 @@ export const printingSectionsTable = pgTable("printing_sections", {
 export const usersTable = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   clerkUserId: text("clerk_user_id").unique(),
+  username: text("username").notNull().unique(),
   name: text("name").notNull(),
   employeeId: text("employee_id").unique(),
   email: text("email").notNull().unique(),
@@ -61,9 +62,40 @@ export const usersTable = pgTable("users", {
   role: text("role").notNull(),
   active: boolean("active").notNull().default(true),
   permissions: text("permissions").array().notNull().default([]),
+  passwordHash: text("password_hash"),
+  status: text("status").notNull().default("ACTIVE"),
+  mustChangePassword: boolean("must_change_password").notNull().default(false),
+  failedLoginAttempts: integer("failed_login_attempts").notNull().default(0),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }),
+  isMaster: boolean("is_master").notNull().default(false),
   lastLogin: timestamp("last_login", { withTimezone: true }),
   ...auditColumns,
 }, (table) => [index("users_email_idx").on(table.email)]);
+
+export const sessionsTable = pgTable("sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tokenHash: text("token_hash").notNull().unique(),
+  userId: uuid("user_id").notNull().references(() => usersTable.id),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("sessions_user_idx").on(table.userId),
+  index("sessions_expiry_idx").on(table.expiresAt),
+]);
+
+export const loginActivityTable = pgTable("login_activity", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => usersTable.id),
+  identifier: text("identifier").notNull(),
+  success: boolean("success").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("login_activity_user_idx").on(table.userId, table.createdAt),
+  index("login_activity_created_idx").on(table.createdAt),
+]);
 
 export const companiesTable = pgTable("companies", {
   id: uuid("id").defaultRandom().primaryKey(),

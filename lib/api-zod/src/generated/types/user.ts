@@ -5,9 +5,11 @@
  * ZM FactoryOS operational API
  * OpenAPI spec version: 0.1.0
  */
+import type { UserStatus } from './userStatus';
 
 export interface User {
   id: string;
+  username: string;
   name: string;
   /** @nullable */
   employeeId?: string | null;
@@ -17,6 +19,8 @@ export interface User {
   department: string;
   role: string;
   active: boolean;
+  status: UserStatus;
+  mustChangePassword: boolean;
   permissions?: string[];
   /** @nullable */
   lastLogin?: Date | null;

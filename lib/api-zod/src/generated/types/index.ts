@@ -75,3 +75,4 @@ export * from './unauthorizedResponse';
 export * from './user';
 export * from './userInput';
 export * from './userList';
+export * from './userStatus';

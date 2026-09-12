@@ -10,7 +10,7 @@ FactoryOS is the operational workspace for ZM Printing & Design Ltd., connecting
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string (provided by the Replit database)
-- Authentication env: `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, and `VITE_CLERK_PUBLISHABLE_KEY` are provisioned by Replit-managed Clerk after authentication is enabled in the Auth pane.
+- Authentication env: set `SESSION_SECRET` plus `INITIAL_MD_USERNAME` and `INITIAL_MD_PASSWORD` before first login. Optional `INITIAL_MD_NAME` and `INITIAL_MD_EMAIL` customize the one-time Master MD record.
 
 ## Stack
 
@@ -34,7 +34,7 @@ FactoryOS is the operational workspace for ZM Printing & Design Ltd., connecting
 - Keep the existing pnpm workspace and React/Vite + Express + Drizzle stack; do not migrate the imported project to a different framework.
 - Keep human-readable job and invoice numbers separate from UUID primary keys.
 - Treat the database and API as the source of truth for operational and financial values; the client consumes generated API contracts.
-- Protect factory routes with server-side Clerk middleware and keep health checks available without authentication.
+- Protect factory routes with database-backed server sessions and keep health checks available without authentication. Passwords use scrypt hashes; the Master MD is created once from environment values and employee accounts are invite-only.
 
 ## Product
 
@@ -48,6 +48,7 @@ Follow the attached ZM FactoryOS master prompt: prioritize architecture, securit
 
 - The API workflow listens on the managed `PORT` (currently 8080); do not hardcode port 5000 in application code.
 - Authenticated API routes require managed Clerk configuration. Without it, `/api/healthz` remains available and protected routes return 401.
+- The account system intentionally has no public signup route. Master MD/Admin-only user creation accepts a temporary password and marks the employee for a forced password change.
 - Run `pnpm install --frozen-lockfile` after importing the project before restarting workflows.
 
 ## Pointers
