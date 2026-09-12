@@ -3,13 +3,22 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: ZM FactoryOS operational API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: dashboard
+  - name: jobs
+  - name: companies
+  - name: billing
+  - name: accounting
+  - name: users
+  - name: notifications
+  - name: audit
+  - name: settings
 paths:
   /healthz:
     get:
@@ -24,8 +33,485 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /me:
+    get:
+      operationId: getCurrentUser
+      tags: [users]
+      summary: Get the signed-in user profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get management dashboard metrics
+      parameters:
+        - $ref: "#/components/parameters/DateRange"
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /activity:
+    get:
+      operationId: listActivity
+      tags: [dashboard]
+      summary: List recent operational activity
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Activity"
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List factory jobs
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Status"
+        - $ref: "#/components/parameters/Priority"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Paginated jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobList"
+    post:
+      operationId: createJob
+      tags: [jobs]
+      summary: Receive a new factory job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobInput"
+      responses:
+        "201":
+          description: Created job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+  /jobs/{id}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get a job with its timeline
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateJob
+      tags: [jobs]
+      summary: Update job details
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobUpdate"
+      responses:
+        "200":
+          description: Updated job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+  /jobs/{id}/status:
+    post:
+      operationId: updateJobStatus
+      tags: [jobs]
+      summary: Move a job through the controlled workflow
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobStatusInput"
+      responses:
+        "200":
+          description: Job with updated status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+  /companies:
+    get:
+      operationId: listCompanies
+      tags: [companies]
+      summary: List client companies
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Paginated companies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyList"
+    post:
+      operationId: createCompany
+      tags: [companies]
+      summary: Add a client company
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyInput"
+      responses:
+        "201":
+          description: Created company
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+  /companies/{id}:
+    get:
+      operationId: getCompany
+      tags: [companies]
+      summary: Get a company with operational and financial history
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Company details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyDetail"
+    patch:
+      operationId: updateCompany
+      tags: [companies]
+      summary: Update a client company
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyUpdate"
+      responses:
+        "200":
+          description: Updated company
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+  /billing/summary:
+    get:
+      operationId: getBillingSummary
+      tags: [billing]
+      responses:
+        "200":
+          description: Billing summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingSummary"
+  /invoices:
+    get:
+      operationId: listInvoices
+      tags: [billing]
+      summary: List invoices
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/InvoiceStatus"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Paginated invoices
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceList"
+    post:
+      operationId: createInvoice
+      tags: [billing]
+      summary: Create an invoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvoiceInput"
+      responses:
+        "201":
+          description: Created invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+  /payments:
+    get:
+      operationId: listPayments
+      tags: [billing]
+      summary: List received payments
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Paginated payments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentList"
+    post:
+      operationId: receivePayment
+      tags: [billing]
+      summary: Receive and record a payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentInput"
+      responses:
+        "201":
+          description: Created payment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+  /accounting/summary:
+    get:
+      operationId: getAccountingSummary
+      tags: [accounting]
+      summary: Get accounting dashboard metrics
+      responses:
+        "200":
+          description: Accounting summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountingSummary"
+  /ledger:
+    get:
+      operationId: listLedgerEntries
+      tags: [accounting]
+      summary: List cash ledger entries
+      parameters:
+        - $ref: "#/components/parameters/DateRange"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Paginated ledger entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LedgerList"
+    post:
+      operationId: createLedgerEntry
+      tags: [accounting]
+      summary: Record a ledger entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LedgerEntryInput"
+      responses:
+        "201":
+          description: Created ledger entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LedgerEntry"
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List users and permissions
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Paginated users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserList"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create a factory user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List the signed-in user's notifications
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+  /notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Updated notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [audit]
+      summary: List sensitive system activity
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogList"
+  /settings/catalogs:
+    get:
+      operationId: getSettingsCatalogs
+      tags: [settings]
+      summary: Get configurable departments and printing sections
+      responses:
+        "200":
+          description: Settings catalogs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsCatalogs"
 components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Search:
+      name: search
+      in: query
+      required: false
+      schema: { type: string }
+    Status:
+      name: status
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/JobStatus" }
+    Priority:
+      name: priority
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/JobPriority" }
+    InvoiceStatus:
+      name: status
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/InvoiceStatus" }
+    Page:
+      name: page
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, default: 1 }
+    PageSize:
+      name: pageSize
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+    DateRange:
+      name: range
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [today, yesterday, week, month, last_month, custom]
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
   schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
     HealthStatus:
       type: object
       properties:
@@ -33,4 +519,456 @@ components:
           type: string
       required:
         - status
+    JobStatus:
+      type: string
+      enum: [DRAFT, RECEIVED, IN_DESIGN, SAMPLE_PENDING, SAMPLE_APPROVAL, IN_PRODUCTION, QC, READY, DELIVERED, CANCELLED]
+    JobPriority:
+      type: string
+      enum: [LOW, NORMAL, HIGH, URGENT]
+    InvoiceStatus:
+      type: string
+      enum: [UNPAID, PARTIAL, PAID, OVERDUE, CANCELLED]
+    PaymentMethod:
+      type: string
+      enum: [CASH, BANK, BKASH, NAGAD, OTHER]
+    LedgerType:
+      type: string
+      enum: [INCOME, EXPENSE]
+    Department:
+      type: object
+      required: [id, name, code]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        code: { type: string }
+        active: { type: boolean }
+    PrintingSection:
+      type: object
+      required: [id, name, active]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        active: { type: boolean }
+    Company:
+      type: object
+      required: [id, name, contactPerson, phone, status, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        contactPerson: { type: string }
+        phone: { type: string }
+        email: { type: ["string", "null"] }
+        address: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+        status: { type: string, enum: [ACTIVE, INACTIVE] }
+        outstanding: { type: number, format: double }
+        createdAt: { type: string, format: date-time }
+    CompanyInput:
+      type: object
+      required: [name, contactPerson, phone]
+      properties:
+        name: { type: string, minLength: 1 }
+        contactPerson: { type: string, minLength: 1 }
+        phone: { type: string, minLength: 1 }
+        email: { type: string, format: email }
+        address: { type: string }
+        notes: { type: string }
+    CompanyUpdate:
+      allOf:
+        - $ref: "#/components/schemas/CompanyInput"
+      required: []
+    Job:
+      type: object
+      required: [id, jobNumber, companyId, companyName, jobType, printingSection, description, quantity, receivedQuantity, priority, status, expectedDeliveryDate, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        jobNumber: { type: string }
+        companyId: { type: string, format: uuid }
+        companyName: { type: string }
+        contactPerson: { type: string }
+        jobType: { type: string }
+        printingSection: { type: string }
+        description: { type: string }
+        quantity: { type: integer, minimum: 1 }
+        receivedQuantity: { type: integer, minimum: 0 }
+        completedQuantity: { type: integer, minimum: 0 }
+        damagedQuantity: { type: integer, minimum: 0 }
+        priority: { $ref: "#/components/schemas/JobPriority" }
+        status: { $ref: "#/components/schemas/JobStatus" }
+        expectedDeliveryDate: { type: string, format: date }
+        sampleRequired: { type: boolean }
+        overdue: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    JobInput:
+      type: object
+      required: [companyId, contactPerson, jobType, printingSection, description, quantity, receivedQuantity, expectedDeliveryDate, priority, sampleRequired]
+      properties:
+        companyId: { type: string, format: uuid }
+        contactPerson: { type: string, minLength: 1 }
+        jobType: { type: string, minLength: 1 }
+        printingSection: { type: string, minLength: 1 }
+        description: { type: string, minLength: 1 }
+        quantity: { type: integer, minimum: 1 }
+        receivedQuantity: { type: integer, minimum: 0 }
+        expectedDeliveryDate: { type: string, format: date }
+        priority: { $ref: "#/components/schemas/JobPriority" }
+        sampleRequired: { type: boolean }
+        notes: { type: string }
+    JobUpdate:
+      type: object
+      properties:
+        companyId: { type: string, format: uuid }
+        contactPerson: { type: string }
+        jobType: { type: string }
+        printingSection: { type: string }
+        description: { type: string }
+        quantity: { type: integer, minimum: 1 }
+        receivedQuantity: { type: integer, minimum: 0 }
+        expectedDeliveryDate: { type: string, format: date }
+        priority: { $ref: "#/components/schemas/JobPriority" }
+        sampleRequired: { type: boolean }
+        notes: { type: string }
+    JobStatusInput:
+      type: object
+      required: [status]
+      properties:
+        status: { $ref: "#/components/schemas/JobStatus" }
+        note: { type: string }
+        overrideReason: { type: string }
+    JobTimelineEntry:
+      type: object
+      required: [id, action, description, actorName, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        action: { type: string }
+        description: { type: string }
+        actorName: { type: string }
+        createdAt: { type: string, format: date-time }
+    JobDetail:
+      allOf:
+        - $ref: "#/components/schemas/Job"
+        - type: object
+          required: [timeline]
+          properties:
+            timeline:
+              type: array
+              items:
+                $ref: "#/components/schemas/JobTimelineEntry"
+            remainingQuantity: { type: integer }
+            daysInFactory: { type: integer }
+    Pagination:
+      type: object
+      required: [page, pageSize, total, totalPages]
+      properties:
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+        totalPages: { type: integer }
+    JobList:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Job" }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    CompanyList:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Company" }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    CompanyDetail:
+      allOf:
+        - $ref: "#/components/schemas/Company"
+        - type: object
+          properties:
+            jobs:
+              type: array
+              items: { $ref: "#/components/schemas/Job" }
+            invoices:
+              type: array
+              items: { $ref: "#/components/schemas/Invoice" }
+            payments:
+              type: array
+              items: { $ref: "#/components/schemas/Payment" }
+    Invoice:
+      type: object
+      required: [id, invoiceNumber, companyId, companyName, issueDate, dueDate, subtotal, discount, tax, grandTotal, paid, due, status]
+      properties:
+        id: { type: string, format: uuid }
+        invoiceNumber: { type: string }
+        companyId: { type: string, format: uuid }
+        companyName: { type: string }
+        issueDate: { type: string, format: date }
+        dueDate: { type: string, format: date }
+        subtotal: { type: number, format: double }
+        discount: { type: number, format: double }
+        tax: { type: number, format: double }
+        grandTotal: { type: number, format: double }
+        paid: { type: number, format: double }
+        due: { type: number, format: double }
+        status: { $ref: "#/components/schemas/InvoiceStatus" }
+    InvoiceItemInput:
+      type: object
+      required: [description, quantity, unitPrice]
+      properties:
+        description: { type: string, minLength: 1 }
+        quantity: { type: integer, minimum: 1 }
+        unitPrice: { type: number, minimum: 0 }
+    InvoiceInput:
+      type: object
+      required: [companyId, dueDate, items]
+      properties:
+        companyId: { type: string, format: uuid }
+        dueDate: { type: string, format: date }
+        discount: { type: number, minimum: 0 }
+        tax: { type: number, minimum: 0 }
+        items:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/InvoiceItemInput" }
+    InvoiceList:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Invoice" }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    Payment:
+      type: object
+      required: [id, invoiceId, invoiceNumber, companyName, amount, method, date, receivedBy, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        invoiceId: { type: string, format: uuid }
+        invoiceNumber: { type: string }
+        companyName: { type: string }
+        amount: { type: number, format: double }
+        method: { $ref: "#/components/schemas/PaymentMethod" }
+        referenceNumber: { type: ["string", "null"] }
+        date: { type: string, format: date }
+        receivedBy: { type: string }
+        notes: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+    PaymentInput:
+      type: object
+      required: [invoiceId, amount, method, date]
+      properties:
+        invoiceId: { type: string, format: uuid }
+        amount: { type: number, exclusiveMinimum: 0 }
+        method: { $ref: "#/components/schemas/PaymentMethod" }
+        referenceNumber: { type: string }
+        date: { type: string, format: date }
+        notes: { type: string }
+    PaymentList:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Payment" }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    LedgerEntry:
+      type: object
+      required: [id, date, type, category, amount, description, createdBy, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        date: { type: string, format: date }
+        type: { $ref: "#/components/schemas/LedgerType" }
+        category: { type: string }
+        amount: { type: number, format: double }
+        description: { type: string }
+        reference: { type: ["string", "null"] }
+        createdBy: { type: string }
+        createdAt: { type: string, format: date-time }
+    LedgerEntryInput:
+      type: object
+      required: [date, type, category, amount, description]
+      properties:
+        date: { type: string, format: date }
+        type: { $ref: "#/components/schemas/LedgerType" }
+        category: { type: string, minLength: 1 }
+        amount: { type: number, exclusiveMinimum: 0 }
+        description: { type: string, minLength: 1 }
+        reference: { type: string }
+    LedgerList:
+      type: object
+      required: [items, pagination, balance]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/LedgerEntry" }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+        balance: { type: number, format: double }
+    User:
+      type: object
+      required: [id, name, email, department, role, active, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        employeeId: { type: ["string", "null"] }
+        email: { type: string, format: email }
+        phone: { type: ["string", "null"] }
+        department: { type: string }
+        role: { type: string }
+        active: { type: boolean }
+        permissions:
+          type: array
+          items: { type: string }
+        lastLogin: { type: ["string", "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+    UserInput:
+      type: object
+      required: [name, email, department, role]
+      properties:
+        name: { type: string, minLength: 1 }
+        employeeId: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string }
+        department: { type: string }
+        role: { type: string }
+        permissions:
+          type: array
+          items: { type: string }
+    UserList:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/User" }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    Notification:
+      type: object
+      required: [id, title, description, type, read, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        type: { type: string }
+        read: { type: boolean }
+        link: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+    AuditLog:
+      type: object
+      required: [id, userName, action, entity, entityId, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        userName: { type: string }
+        action: { type: string }
+        entity: { type: string }
+        entityId: { type: string }
+        oldValue: { type: ["string", "null"] }
+        newValue: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+    AuditLogList:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AuditLog" }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    Activity:
+      type: object
+      required: [id, type, title, description, actor, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string }
+        title: { type: string }
+        description: { type: string }
+        actor: { type: string }
+        createdAt: { type: string, format: date-time }
+        href: { type: ["string", "null"] }
+    DashboardSummary:
+      type: object
+      required: [kpis, pipeline, workload, revenueTrend, attention]
+      properties:
+        kpis:
+          type: object
+          required: [todayJobs, activeJobs, productionJobs, qcJobs, readyJobs, todayDeliveries, receivable, monthlyRevenue, monthlyExpense, estimatedProfit]
+          properties:
+            todayJobs: { type: integer }
+            activeJobs: { type: integer }
+            productionJobs: { type: integer }
+            qcJobs: { type: integer }
+            readyJobs: { type: integer }
+            todayDeliveries: { type: integer }
+            receivable: { type: number, format: double }
+            monthlyRevenue: { type: number, format: double }
+            monthlyExpense: { type: number, format: double }
+            estimatedProfit: { type: number, format: double }
+        pipeline:
+          type: array
+          items:
+            type: object
+            required: [label, value]
+            properties:
+              label: { type: string }
+              value: { type: integer }
+        workload:
+          type: array
+          items:
+            type: object
+            required: [department, value]
+            properties:
+              department: { type: string }
+              value: { type: integer }
+        revenueTrend:
+          type: array
+          items:
+            type: object
+            required: [label, revenue, expense]
+            properties:
+              label: { type: string }
+              revenue: { type: number, format: double }
+              expense: { type: number, format: double }
+        attention:
+          type: array
+          items:
+            type: object
+            required: [label, count, tone]
+            properties:
+              label: { type: string }
+              count: { type: integer }
+              tone: { type: string, enum: [danger, warning, info, success] }
+    BillingSummary:
+      type: object
+      required: [totalSales, totalReceived, totalReceivable, overdueReceivable, currentMonthRevenue, overdueInvoices]
+      properties:
+        totalSales: { type: number, format: double }
+        totalReceived: { type: number, format: double }
+        totalReceivable: { type: number, format: double }
+        overdueReceivable: { type: number, format: double }
+        currentMonthRevenue: { type: number, format: double }
+        overdueInvoices: { type: integer }
+    AccountingSummary:
+      type: object
+      required: [cashBalance, todaysIncome, todaysExpense, monthlyIncome, monthlyExpense, netCashFlow, pendingAdvances, pendingVouchers]
+      properties:
+        cashBalance: { type: number, format: double }
+        todaysIncome: { type: number, format: double }
+        todaysExpense: { type: number, format: double }
+        monthlyIncome: { type: number, format: double }
+        monthlyExpense: { type: number, format: double }
+        netCashFlow: { type: number, format: double }
+        pendingAdvances: { type: number, format: double }
+        pendingVouchers: { type: number, format: double }
+    SettingsCatalogs:
+      type: object
+      required: [departments, printingSections, jobStatuses]
+      properties:
+        departments:
+          type: array
+          items: { $ref: "#/components/schemas/Department" }
+        printingSections:
+          type: array
+          items: { $ref: "#/components/schemas/PrintingSection" }
+        jobStatuses:
+          type: array
+          items: { $ref: "#/components/schemas/JobStatus" }
 
