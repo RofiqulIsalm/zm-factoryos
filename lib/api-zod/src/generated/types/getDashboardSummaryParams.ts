@@ -6,7 +6,17 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { DateRangeParameter } from './dateRangeParameter';
+import type { EndDateParameter } from './endDateParameter';
+import type { StartDateParameter } from './startDateParameter';
 
 export type GetDashboardSummaryParams = {
 range?: DateRangeParameter;
+/**
+ * Inclusive start date for a custom dashboard range.
+ */
+startDate?: StartDateParameter;
+/**
+ * Inclusive end date for a custom dashboard range.
+ */
+endDate?: EndDateParameter;
 };

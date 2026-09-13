@@ -31,6 +31,7 @@ const bengaliMoney = (value?: number) => `৳${bengaliNumber(value)}`;
 const date = (value?: string | null) => value ? new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '—';
 const dateTime = (value?: string | null) => value ? new Date(value).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
 const bengaliToday = () => new Intl.DateTimeFormat('bn-BD', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+const localDateInput = (value = new Date()) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
 const initials = (name = 'ZM') => name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase();
 
 function Logo({ compact = false }: { compact?: boolean }) {
@@ -97,7 +98,7 @@ function Shell({ children }: { children: ReactNode }) {
   const { data: notifications } = useListNotifications();
   const markRead = useMarkNotificationRead();
   const unread = notifications?.filter((n) => !n.read).length ?? 0;
-  const side = <aside className={`${collapsed ? 'w-[76px]' : 'w-[248px]'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} fixed inset-y-0 left-0 z-40 flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300 md:relative md:translate-x-0`}>
+  const side = <aside className={`${collapsed ? 'w-[76px]' : 'w-[248px]'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} fixed inset-y-0 left-0 z-40 flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300`}>
     <div className="flex h-[76px] items-center justify-between border-b border-sidebar-border px-5"><Logo compact={collapsed} /><button onClick={() => setCollapsed(!collapsed)} className="hidden text-sidebar-foreground/60 hover:text-sidebar-foreground md:block" data-testid="button-collapse-sidebar">{collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}</button></div>
     <div className="flex-1 overflow-y-auto px-3 py-6">
       {!collapsed && <p className="mono mb-3 px-3 text-[9px] uppercase tracking-[.18em] text-sidebar-foreground/45">Operations</p>}
@@ -108,7 +109,7 @@ function Shell({ children }: { children: ReactNode }) {
     <div className="border-t border-sidebar-border p-3"><div className="flex items-center gap-3 rounded-sm bg-sidebar-accent p-2.5"><div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-accent-foreground">{initials(user?.name)}</div>{!collapsed && <div className="min-w-0"><p className="truncate text-xs font-bold">{user?.name || 'ZM team member'}</p><p className="truncate text-[10px] text-sidebar-foreground/50">{user?.role || 'Operations'}</p></div>}</div></div>
   </aside>;
   if (!user && !isLoading) return <Redirect to="/sign-in" />;
-  return <div className="flex min-h-[100dvh] bg-background"><div className="fixed inset-0 z-30 hidden bg-foreground/30 md:hidden" onClick={() => setMobileOpen(false)} />{side}<main className="min-w-0 flex-1"><header className="sticky top-0 z-20 flex h-[76px] items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur md:px-8"><div className="flex items-center gap-3"><button className="md:hidden" onClick={() => setMobileOpen(true)} data-testid="button-open-sidebar"><Menu className="h-5 w-5" /></button><span className="mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">ZM / {location === '/md' ? 'Management desk' : location.split('/').filter(Boolean).slice(-1)[0] || 'FactoryOS'}</span></div><div className="flex items-center gap-3"><div className="relative"><button onClick={() => notifications?.[0] && markRead.mutate({ id: notifications[0].id })} className="relative rounded-sm p-2 text-muted-foreground hover:bg-muted hover:text-foreground" data-testid="button-notifications"><Bell className="h-[18px] w-[18px]" />{unread > 0 && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" />}</button></div><div className="hidden h-6 w-px bg-border sm:block" /><span className="mono hidden text-[10px] uppercase tracking-wider text-muted-foreground sm:block">Shift active · Dhaka</span></div></header><div className="mx-auto max-w-[1500px] p-5 md:p-8">{children}</div></main></div>;
+  return <div className="min-h-[100dvh] bg-background"><div className="fixed inset-0 z-30 hidden bg-foreground/30 md:hidden" onClick={() => setMobileOpen(false)} />{side}<main className={`h-[100dvh] min-w-0 overflow-y-auto ${collapsed ? 'md:pl-[76px]' : 'md:pl-[248px]'}`}><header className="sticky top-0 z-20 flex h-[76px] items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur md:px-8"><div className="flex items-center gap-3"><button className="md:hidden" onClick={() => setMobileOpen(true)} data-testid="button-open-sidebar"><Menu className="h-5 w-5" /></button><span className="mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">ZM / {location === '/md' ? 'Management desk' : location.split('/').filter(Boolean).slice(-1)[0] || 'FactoryOS'}</span></div><div className="flex items-center gap-3"><div className="relative"><button onClick={() => notifications?.[0] && markRead.mutate({ id: notifications[0].id })} className="relative rounded-sm p-2 text-muted-foreground hover:bg-muted hover:text-foreground" data-testid="button-notifications"><Bell className="h-[18px] w-[18px]" />{unread > 0 && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" />}</button></div><div className="hidden h-6 w-px bg-border sm:block" /><span className="mono hidden text-[10px] uppercase tracking-wider text-muted-foreground sm:block">Shift active · Dhaka</span></div></header><div className="mx-auto max-w-[1500px] p-5 md:p-8">{children}</div></main></div>;
 }
 
 function Landing() {
@@ -121,10 +122,16 @@ function LandingStat({ value, label }: { value: string; label: string }) { retur
 function PageHeader({ eyebrow, title, detail, action }: { eyebrow: string; title: string; detail?: string; action?: ReactNode }) {
   return <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><p className="mono mb-2 text-[10px] font-medium uppercase tracking-[.18em] text-primary">{eyebrow}</p><h1 className="display text-3xl font-extrabold tracking-tight md:text-4xl">{title}</h1>{detail && <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{detail}</p>}</div>{action}</div>;
 }
-function SectionCard({ children, className = '', title, action }: { children: ReactNode; className?: string; title?: string; action?: ReactNode }) { return <section className={`rounded-sm border border-border bg-card shadow-sm ${className}`}>{title && <div className="flex items-center justify-between border-b border-border px-5 py-4"><h2 className="text-sm font-extrabold">{title}</h2>{action}</div>}{children}</section>; }
+function SectionCard({ children, className = '', title, action }: { children: ReactNode; className?: string; title?: string; action?: ReactNode }) { return <section className={`rounded-sm border border-border bg-card shadow-sm ${className}`}>{title && <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4"><h2 className="text-sm font-extrabold">{title}</h2>{action}</div>}{children}</section>; }
 
 function Management() {
-  const { data, isLoading, isError, refetch } = useGetDashboardSummary({ range: 'month' });
+  const [range, setRange] = useState<'month' | 'last_month' | 'year' | 'custom'>('month');
+  const [customStart, setCustomStart] = useState(() => localDateInput(new Date(new Date().getFullYear(), new Date().getMonth(), 1)));
+  const [customEnd, setCustomEnd] = useState(() => localDateInput());
+  const dashboardParams = range === 'custom'
+    ? { range, startDate: customStart, endDate: customEnd }
+    : { range };
+  const { data, isLoading, isError, refetch } = useGetDashboardSummary(dashboardParams);
   const { data: activity, isLoading: isActivityLoading, isError: isActivityError, refetch: refetchActivity } = useListActivity({ limit: 8 });
   const { data: user } = useGetCurrentUser();
   if (isLoading) return <Shell><DashboardSkeleton /></Shell>;
@@ -140,7 +147,7 @@ function Management() {
       <Button onClick={() => { refetch(); refetchActivity(); }} variant="secondary" testId="button-refresh-dashboard"><RefreshCw className="h-3.5 w-3.5" />হালনাগাদ <span className="font-normal text-muted-foreground">(Refresh)</span></Button>
     </div>
 
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8" data-testid="grid-management-kpis">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-4" data-testid="grid-management-kpis">
       <ManagementKpi label="আজকের জব" secondary="Today" value={bengaliNumber(k.todayJobs)} icon={ClipboardList} tone="blue" index={0} />
       <ManagementKpi label="চলমান জব" secondary="Active" value={bengaliNumber(k.activeJobs)} icon={BriefcaseBusiness} tone="orange" index={1} />
       <ManagementKpi label="উৎপাদনে চলছে" secondary="In production" value={bengaliNumber(k.productionJobs)} icon={ActivityIcon} tone="teal" index={2} />
@@ -172,35 +179,21 @@ function Management() {
       ]} />
     </div>
 
-    <SectionCard className="mt-6" title="সাম্প্রতিক জব ও কার্যক্রম" action={<Link href="/reception/jobs" className="text-xs font-bold text-primary" data-testid="link-management-recent-jobs">সব দেখুন <ArrowRight className="ml-1 inline h-3 w-3" /></Link>}>
-      {isActivityLoading ? <LoadingRows /> : isActivityError ? <ErrorState retry={refetchActivity} /> : <ManagementActivity items={activity || []} />}
-    </SectionCard>
-
-    <div className="mt-6 grid gap-5 xl:grid-cols-[1.1fr_.9fr]">
-      <SectionCard title="উৎপাদন লাইভ ভিউ" action={<Link href="/reception/jobs" className="text-xs font-bold text-primary" data-testid="link-management-pipeline">জব রেজিস্টার <ArrowRight className="ml-1 inline h-3 w-3" /></Link>}>
-        <div className="grid gap-6 p-5 lg:grid-cols-[1.25fr_.75fr]">
-          <div className="space-y-4">
-            <p className="text-xs text-muted-foreground">কোন স্টেশনে কত কাজ আছে</p>
-            {data.pipeline.map((item, i) => <div key={item.label} data-testid={`metric-pipeline-${i}`}>
-              <div className="mb-1.5 flex justify-between text-xs"><span className="font-semibold">{item.label}</span><span className="mono text-muted-foreground">{bengaliNumber(item.value)}</span></div>
-              <div className="h-2 overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full ${i === 0 ? 'bg-primary' : i === 1 ? 'bg-accent' : i === 2 ? 'bg-foreground' : 'bg-muted-foreground'}`} style={{ width: `${Math.min(100, Math.max(6, item.value * 8))}%` }} /></div>
-            </div>)}
-          </div>
-          <div className="border-t border-border pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-            <p className="mb-4 text-xs text-muted-foreground">অগ্রাধিকারের তালিকা</p>
-            <div className="space-y-3">{data.attention.map((item, i) => <div className="flex items-center justify-between" key={item.label} data-testid={`attention-${i}`}><div className="flex items-center gap-2.5"><span className={`h-2 w-2 rounded-full ${item.tone === 'danger' ? 'bg-destructive' : item.tone === 'warning' ? 'bg-primary' : item.tone === 'success' ? 'bg-emerald-500' : 'bg-accent'}`} /><span className="text-xs font-semibold">{item.label}</span></div><span className="mono text-xs font-medium">{bengaliNumber(item.count)}</span></div>)}</div>
-          </div>
-        </div>
+    <div className="mt-6 grid gap-5 xl:grid-cols-[2fr_1fr]">
+      <SectionCard title="ফ্যাক্টরি বিশ্লেষণ" action={<DashboardRangeControls range={range} setRange={setRange} customStart={customStart} customEnd={customEnd} setCustomStart={setCustomStart} setCustomEnd={setCustomEnd} />}>
+        <FactoryAnalytics data={data} />
       </SectionCard>
-      <SectionCard title="মাসের আয়-ব্যয়ের ছন্দ" action={<span className="mono text-[10px] uppercase text-muted-foreground">Month</span>}><RevenueChart items={data.revenueTrend} /></SectionCard>
+      <SectionCard title="সাম্প্রতিক জব ও কার্যক্রম" action={<Link href="/reception/jobs" className="text-xs font-bold text-primary" data-testid="link-management-recent-jobs">সব দেখুন <ArrowRight className="ml-1 inline h-3 w-3" /></Link>}>
+        {isActivityLoading ? <LoadingRows /> : isActivityError ? <ErrorState retry={refetchActivity} /> : <ManagementActivity items={activity || []} />}
+      </SectionCard>
     </div>
   </div></Shell>;
 }
 function ManagementKpi({ label, secondary, value, icon: Icon, tone, index }: { label: string; secondary: string; value: string; icon: typeof Gauge; tone: string; index: number }) {
   const tones: Record<string, string> = { blue: 'bg-blue-500', orange: 'bg-orange-500', green: 'bg-emerald-500', red: 'bg-red-500', violet: 'bg-violet-500', teal: 'bg-teal-500', cyan: 'bg-cyan-500', pink: 'bg-pink-500' };
-  return <div className={`page-enter stagger-${Math.min(4, index + 1)} rounded-xl border border-border bg-card p-3.5 shadow-sm md:p-4`} data-testid={`kpi-management-${secondary.toLowerCase().replaceAll(' ', '-')}`}>
-    <div className="flex items-start justify-between gap-2"><div><p className="text-[11px] font-bold leading-tight text-foreground md:text-xs">{label}</p><p className="mono mt-1 text-[8px] uppercase tracking-[.08em] text-muted-foreground">{secondary}</p></div><span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white ${tones[tone]}`}><Icon className="h-4 w-4" /></span></div>
-    <p className="display mt-4 truncate text-xl font-extrabold md:text-2xl" data-testid={`value-management-${secondary.toLowerCase().replaceAll(' ', '-')}`}>{value}</p>
+  return <div className={`page-enter stagger-${Math.min(4, index + 1)} min-h-[132px] rounded-xl border border-border bg-card p-5 shadow-sm`} data-testid={`kpi-management-${secondary.toLowerCase().replaceAll(' ', '-')}`}>
+    <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-bold leading-tight text-foreground">{label}</p><p className="mono mt-1.5 text-[9px] uppercase tracking-[.08em] text-muted-foreground">{secondary}</p></div><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white ${tones[tone]}`}><Icon className="h-5 w-5" /></span></div>
+    <p className="display mt-5 truncate text-3xl font-extrabold" data-testid={`value-management-${secondary.toLowerCase().replaceAll(' ', '-')}`}>{value}</p>
   </div>;
 }
 function QuickActionGroup({ title, secondary, detail, icon: Icon, tone, actions }: { title: string; secondary: string; detail: string; icon: typeof Gauge; tone: string; actions: { label: string; href: string; testId: string }[] }) {
@@ -209,6 +202,53 @@ function QuickActionGroup({ title, secondary, detail, icon: Icon, tone, actions 
     <div className="flex items-start gap-3"><span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${tones[tone]}`}><Icon className="h-[18px] w-[18px]" /></span><div><h2 className="text-base font-extrabold">{title} <span className="ml-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{secondary}</span></h2><p className="mt-1 text-[11px] text-muted-foreground">{detail}</p></div></div>
     <div className="mt-4 grid grid-cols-2 gap-2">{actions.map((action) => <Link key={action.testId} href={action.href} data-testid={action.testId} className="flex min-h-9 items-center justify-center rounded-md border border-border bg-background px-2 text-[11px] font-bold text-primary transition-colors hover:border-primary hover:bg-primary/5">{action.label}</Link>)}</div>
   </section>;
+}
+type DashboardRange = 'month' | 'last_month' | 'year' | 'custom';
+function DashboardRangeControls({ range, setRange, customStart, customEnd, setCustomStart, setCustomEnd }: { range: DashboardRange; setRange: (range: DashboardRange) => void; customStart: string; customEnd: string; setCustomStart: (value: string) => void; setCustomEnd: (value: string) => void }) {
+  const options: { value: DashboardRange; label: string }[] = [
+    { value: 'last_month', label: 'গত মাস' },
+    { value: 'month', label: 'এই মাস' },
+    { value: 'year', label: 'এই বছর' },
+    { value: 'custom', label: 'কাস্টম' },
+  ];
+  return <div className="flex flex-wrap items-center justify-end gap-1.5" data-testid="dashboard-range-controls">
+    <div className="flex rounded-md border border-border bg-background p-0.5">
+      {options.map((option) => <button key={option.value} type="button" onClick={() => setRange(option.value)} className={`rounded px-2.5 py-1.5 text-[10px] font-bold transition-colors ${range === option.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`} data-testid={`button-dashboard-range-${option.value}`}>{option.label}</button>)}
+    </div>
+    {range === 'custom' && <div className="flex items-center gap-1.5">
+      <input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} className="h-8 rounded-md border border-input bg-background px-2 text-[10px] font-semibold outline-none focus:border-primary" aria-label="শুরুর তারিখ" data-testid="input-dashboard-start-date" />
+      <span className="text-[10px] text-muted-foreground">থেকে</span>
+      <input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} className="h-8 rounded-md border border-input bg-background px-2 text-[10px] font-semibold outline-none focus:border-primary" aria-label="শেষ তারিখ" data-testid="input-dashboard-end-date" />
+    </div>}
+  </div>;
+}
+function FactoryAnalytics({ data }: { data: { revenueTrend: { label: string; revenue: number; expense: number }[]; pipeline: { label: string; value: number }[]; attention: { label: string; count: number; tone: string }[] } }) {
+  const max = Math.max(...data.revenueTrend.map((item) => Math.max(item.revenue, item.expense)), 1);
+  return <div className="p-5">
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div><p className="text-sm font-extrabold">আয় ও খরচের ট্রেন্ড</p><p className="mt-1 text-xs text-muted-foreground">নির্বাচিত সময়ের factory performance এক নজরে</p></div>
+      <div className="flex items-center gap-4 text-[10px] font-semibold text-muted-foreground"><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-primary" />আয়</span><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-accent" />খরচ</span></div>
+    </div>
+    <div className="grid h-72 grid-cols-[repeat(auto-fit,minmax(34px,1fr))] items-end gap-2 border-b border-l border-border bg-[linear-gradient(to_bottom,transparent_24%,hsl(var(--border)/.45)_25%,transparent_26%,transparent_49%,hsl(var(--border)/.45)_50%,transparent_51%,transparent_74%,hsl(var(--border)/.45)_75%,transparent_76%)] px-3 pb-3 pt-5 md:gap-3" data-testid="chart-factory-revenue">
+      {data.revenueTrend.map((item) => <div key={item.label} className="group flex h-full min-w-0 flex-col items-center justify-end gap-2" title={`${item.label}: আয় ${money(item.revenue)}, খরচ ${money(item.expense)}`}>
+        <div className="flex h-full w-full items-end justify-center gap-1">
+          <div className="w-[42%] rounded-t bg-primary transition-all group-hover:brightness-110" style={{ height: `${Math.max(3, item.revenue / max * 100)}%` }} />
+          <div className="w-[42%] rounded-t bg-accent transition-all group-hover:brightness-110" style={{ height: `${Math.max(3, item.expense / max * 100)}%` }} />
+        </div>
+        <span className="max-w-full truncate text-[9px] text-muted-foreground">{item.label}</span>
+      </div>)}
+    </div>
+    <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div>
+        <div className="mb-4 flex items-center justify-between"><p className="text-sm font-extrabold">উৎপাদন পাইপলাইন</p><Link href="/reception/jobs" className="text-[10px] font-bold text-primary" data-testid="link-management-pipeline">জব রেজিস্টার <ArrowRight className="ml-1 inline h-3 w-3" /></Link></div>
+        <div className="space-y-3">{data.pipeline.map((item, index) => <div key={item.label} data-testid={`metric-pipeline-${index}`}><div className="mb-1.5 flex justify-between text-xs"><span className="font-semibold">{item.label}</span><span className="mono text-muted-foreground">{bengaliNumber(item.value)}</span></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full ${index === 0 ? 'bg-primary' : index === 1 ? 'bg-accent' : index === 2 ? 'bg-foreground' : 'bg-muted-foreground'}`} style={{ width: `${Math.min(100, Math.max(6, item.value * 8))}%` }} /></div></div>)}</div>
+      </div>
+      <div className="border-t border-border pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+        <p className="mb-4 text-sm font-extrabold">যেখানে নজর দরকার</p>
+        <div className="space-y-3">{data.attention.map((item, index) => <div className="flex items-center justify-between" key={item.label} data-testid={`attention-${index}`}><div className="flex items-center gap-2.5"><span className={`h-2 w-2 rounded-full ${item.tone === 'danger' ? 'bg-destructive' : item.tone === 'warning' ? 'bg-primary' : item.tone === 'success' ? 'bg-emerald-500' : 'bg-accent'}`} /><span className="text-xs font-semibold">{item.label}</span></div><span className="mono text-xs font-medium">{bengaliNumber(item.count)}</span></div>)}</div>
+      </div>
+    </div>
+  </div>;
 }
 function ManagementActivity({ items }: { items: ActivityType[] }) {
   if (!items.length) return <EmptyState title="এখনও কোনো জব নেই" detail="আপনার টিম কাজ শুরু করলে সাম্প্রতিক কার্যক্রম এখানে দেখা যাবে।" action={<Link href="/reception/jobs/new" className="text-xs font-bold text-primary" data-testid="link-management-empty-job">প্রথম জব নিন</Link>} />;
@@ -219,7 +259,7 @@ function ManagementActivity({ items }: { items: ActivityType[] }) {
 }
 function Kpi({ label, value, icon: Icon, tone, delay }: { label: string; value: string | number; icon: typeof Gauge; tone: string; delay: number }) { return <div className={`page-enter stagger-${Math.min(4, delay + 1)} rounded-sm border border-border bg-card p-4 shadow-sm`} data-testid={`kpi-${label.toLowerCase().replaceAll(' ', '-')}`}><div className="flex items-start justify-between"><span className="mono text-[9px] uppercase tracking-[.1em] text-muted-foreground">{label}</span><Icon className={`h-4 w-4 ${tone === 'primary' ? 'text-primary' : tone === 'teal' ? 'text-accent' : tone === 'good' ? 'text-emerald-600' : tone === 'warn' ? 'text-amber-600' : 'text-muted-foreground'}`} /></div><p className="display mt-4 text-2xl font-extrabold md:text-3xl">{value}</p></div>; }
 function RevenueChart({ items }: { items: { label: string; revenue: number; expense: number }[] }) { const max = Math.max(...items.map((i) => Math.max(i.revenue, i.expense)), 1); return <div className="flex h-56 items-end gap-2 px-5 pb-5 pt-8">{items.map((item) => <div key={item.label} className="group flex flex-1 flex-col items-center gap-2"><div className="flex h-40 w-full items-end justify-center gap-1"><div title={`Revenue ${money(item.revenue)}`} className="w-[35%] rounded-t-sm bg-primary transition-all group-hover:brightness-110" style={{ height: `${Math.max(5, item.revenue / max * 100)}%` }} /><div title={`Expense ${money(item.expense)}`} className="w-[35%] rounded-t-sm bg-accent/70 transition-all group-hover:brightness-110" style={{ height: `${Math.max(5, item.expense / max * 100)}%` }} /></div><span className="mono text-[9px] text-muted-foreground">{item.label}</span></div>)}</div>; }
-function DashboardSkeleton() { return <div className="space-y-5"><div className="space-y-3"><Skeleton className="h-3 w-40" /><Skeleton className="h-10 w-80" /></div><div className="grid grid-cols-2 gap-3 md:grid-cols-5">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-28" />)}</div><div className="grid gap-5 md:grid-cols-2"><Skeleton className="h-72" /><Skeleton className="h-72" /></div></div>; }
+function DashboardSkeleton() { return <div className="space-y-5"><div className="space-y-3"><Skeleton className="h-3 w-40" /><Skeleton className="h-10 w-80" /></div><div className="grid grid-cols-2 gap-4 md:grid-cols-4">{[1,2,3,4,5,6,7,8].map(i => <Skeleton key={i} className="h-32" />)}</div><div className="grid gap-5 xl:grid-cols-[2fr_1fr]"><Skeleton className="h-[620px]" /><Skeleton className="h-[620px]" /></div></div>; }
 
 function Reception() {
   const { data, isLoading, isError, refetch } = useListJobs({ page: 1, pageSize: 8 });

@@ -54,6 +54,8 @@ paths:
       summary: Get management dashboard metrics
       parameters:
         - $ref: "#/components/parameters/DateRange"
+        - $ref: "#/components/parameters/StartDate"
+        - $ref: "#/components/parameters/EndDate"
       responses:
         "200":
           description: Dashboard summary
@@ -492,7 +494,19 @@ components:
       required: false
       schema:
         type: string
-        enum: [today, yesterday, week, month, last_month, custom]
+        enum: [today, yesterday, week, month, last_month, year, custom]
+    StartDate:
+      name: startDate
+      in: query
+      required: false
+      description: Inclusive start date for a custom dashboard range.
+      schema: { type: string }
+    EndDate:
+      name: endDate
+      in: query
+      required: false
+      description: Inclusive end date for a custom dashboard range.
+      schema: { type: string }
   responses:
     Unauthorized:
       description: Authentication required

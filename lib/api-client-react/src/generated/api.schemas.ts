@@ -529,11 +529,30 @@ export const DateRangeParameter = {
   week: 'week',
   month: 'month',
   last_month: 'last_month',
+  year: 'year',
   custom: 'custom',
 } as const;
 
+/**
+ * Inclusive start date for a custom dashboard range.
+ */
+export type StartDateParameter = string;
+
+/**
+ * Inclusive end date for a custom dashboard range.
+ */
+export type EndDateParameter = string;
+
 export type GetDashboardSummaryParams = {
 range?: DateRangeParameter;
+/**
+ * Inclusive start date for a custom dashboard range.
+ */
+startDate?: StartDateParameter;
+/**
+ * Inclusive end date for a custom dashboard range.
+ */
+endDate?: EndDateParameter;
 };
 
 export type ListActivityParams = {

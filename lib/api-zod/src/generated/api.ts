@@ -42,7 +42,9 @@ export const GetCurrentUserResponse = zod.object({
  * @summary Get management dashboard metrics
  */
 export const GetDashboardSummaryQueryParams = zod.object({
-  "range": zod.enum(['today', 'yesterday', 'week', 'month', 'last_month', 'custom']).optional()
+  "range": zod.enum(['today', 'yesterday', 'week', 'month', 'last_month', 'year', 'custom']).optional(),
+  "startDate": zod.coerce.string().optional().describe('Inclusive start date for a custom dashboard range.'),
+  "endDate": zod.coerce.string().optional().describe('Inclusive end date for a custom dashboard range.')
 })
 
 export const GetDashboardSummaryResponse = zod.object({
@@ -745,7 +747,7 @@ export const listLedgerEntriesQueryPageSizeMax = 100;
 
 
 export const ListLedgerEntriesQueryParams = zod.object({
-  "range": zod.enum(['today', 'yesterday', 'week', 'month', 'last_month', 'custom']).optional(),
+  "range": zod.enum(['today', 'yesterday', 'week', 'month', 'last_month', 'year', 'custom']).optional(),
   "page": zod.coerce.number().int().min(1).default(listLedgerEntriesQueryPageDefault),
   "pageSize": zod.coerce.number().int().min(1).max(listLedgerEntriesQueryPageSizeMax).default(listLedgerEntriesQueryPageSizeDefault)
 })

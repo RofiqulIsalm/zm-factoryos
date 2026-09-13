@@ -15,5 +15,6 @@ export const DateRangeParameter = {
   week: 'week',
   month: 'month',
   last_month: 'last_month',
+  year: 'year',
   custom: 'custom',
 } as const;

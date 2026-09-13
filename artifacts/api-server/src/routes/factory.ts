@@ -40,6 +40,7 @@ import {
   ReceivePaymentBody,
   MarkNotificationReadParams,
   GetCurrentUserResponse,
+  GetDashboardSummaryQueryParams,
   GetDashboardSummaryResponse,
   ListActivityResponse,
   ListJobsResponse,
@@ -147,13 +148,82 @@ router.get("/me", async (req, res): Promise<void> => {
   }));
 });
 
-router.get("/dashboard/summary", async (_req, res): Promise<void> => {
+router.get("/dashboard/summary", async (req, res): Promise<void> => {
+  const parsedParams = GetDashboardSummaryQueryParams.safeParse(req.query);
+  if (!parsedParams.success) {
+    res.status(400).json({ message: "Invalid dashboard range." });
+    return;
+  }
+  const { range = "month", startDate: customStartDate, endDate: customEndDate } = parsedParams.data;
+  const now = new Date();
+  const todayDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const addDays = (value: Date, days: number) => new Date(value.getTime() + days * 24 * 60 * 60 * 1000);
+  const startOfMonth = (value: Date) => new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), 1));
+  const dateFromQuery = (value: string | undefined) => value ? new Date(`${value}T00:00:00.000Z`) : null;
+  let rangeStart = startOfMonth(todayDate);
+  let rangeEnd = addDays(todayDate, 1);
+
+  if (range === "today") {
+    rangeStart = todayDate;
+  } else if (range === "yesterday") {
+    rangeStart = addDays(todayDate, -1);
+    rangeEnd = todayDate;
+  } else if (range === "week") {
+    rangeStart = addDays(todayDate, -6);
+  } else if (range === "last_month") {
+    rangeEnd = startOfMonth(todayDate);
+    rangeStart = startOfMonth(addDays(rangeEnd, -1));
+  } else if (range === "year") {
+    rangeStart = new Date(Date.UTC(todayDate.getUTCFullYear(), 0, 1));
+    rangeEnd = new Date(Date.UTC(todayDate.getUTCFullYear() + 1, 0, 1));
+  } else if (range === "custom") {
+    const customStart = dateFromQuery(customStartDate);
+    const customEnd = dateFromQuery(customEndDate);
+    if (!customStart || !customEnd || Number.isNaN(customStart.getTime()) || Number.isNaN(customEnd.getTime()) || customStart > customEnd) {
+      res.status(400).json({ message: "Custom dashboard ranges require valid startDate and endDate values." });
+      return;
+    }
+    rangeStart = customStart;
+    rangeEnd = addDays(customEnd, 1);
+  }
+
+  const inRange = (value: Date | string) => {
+    const dateValue = value instanceof Date ? value : new Date(`${value}T00:00:00.000Z`);
+    return dateValue >= rangeStart && dateValue < rangeEnd;
+  };
+  const rangeDays = Math.max(1, Math.round((rangeEnd.getTime() - rangeStart.getTime()) / (24 * 60 * 60 * 1000)));
+  const bucketByMonth = rangeDays > 62;
+  const bucketKey = (value: Date | string) => {
+    const dateValue = value instanceof Date ? value : new Date(`${value}T00:00:00.000Z`);
+    return bucketByMonth
+      ? `${dateValue.getUTCFullYear()}-${String(dateValue.getUTCMonth() + 1).padStart(2, "0")}`
+      : dateValue.toISOString().slice(0, 10);
+  };
+  const bucketLabel = (value: Date) => bucketByMonth
+    ? new Intl.DateTimeFormat("bn-BD", { month: "short" }).format(value)
+    : new Intl.DateTimeFormat("bn-BD", { day: "numeric", month: "short" }).format(value);
+  const trendBuckets: { key: string; label: string; revenue: number; expense: number }[] = [];
+  for (let cursor = new Date(rangeStart); cursor < rangeEnd;) {
+    const key = bucketKey(cursor);
+    trendBuckets.push({ key, label: bucketLabel(cursor), revenue: 0, expense: 0 });
+    cursor = bucketByMonth ? new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 1)) : addDays(cursor, 1);
+  }
   const jobs = await db.select().from(jobsTable);
   const invoices = await db.select().from(invoicesTable);
   const ledger = await db.select().from(ledgerEntriesTable);
   const activeJobs = jobs.filter((job) => !["DELIVERED", "CANCELLED"].includes(job.status));
-  const monthlyRevenue = invoices.reduce((total, invoice) => total + money(invoice.grandTotal), 0);
-  const monthlyExpense = ledger.filter((entry) => entry.type === "EXPENSE").reduce((total, entry) => total + money(entry.amount), 0);
+  const rangedInvoices = invoices.filter((invoice) => inRange(invoice.issueDate));
+  const rangedLedger = ledger.filter((entry) => inRange(entry.date));
+  const monthlyRevenue = rangedInvoices.reduce((total, invoice) => total + money(invoice.grandTotal), 0);
+  const monthlyExpense = rangedLedger.filter((entry) => entry.type === "EXPENSE").reduce((total, entry) => total + money(entry.amount), 0);
+  rangedInvoices.forEach((invoice) => {
+    const bucket = trendBuckets.find((item) => item.key === bucketKey(invoice.issueDate));
+    if (bucket) bucket.revenue += money(invoice.grandTotal);
+  });
+  rangedLedger.filter((entry) => entry.type === "EXPENSE").forEach((entry) => {
+    const bucket = trendBuckets.find((item) => item.key === bucketKey(entry.date));
+    if (bucket) bucket.expense += money(entry.amount);
+  });
   const pipeline = ["RECEIVED", "IN_PRODUCTION", "QC", "READY", "DELIVERED"].map((label) => ({
     label,
     value: jobs.filter((job) => job.status === label).length,
@@ -177,7 +247,7 @@ router.get("/dashboard/summary", async (_req, res): Promise<void> => {
     },
     pipeline,
     workload,
-    revenueTrend: [{ label: "This month", revenue: monthlyRevenue, expense: monthlyExpense }],
+    revenueTrend: trendBuckets.map(({ key: _key, ...bucket }) => bucket),
     attention: [
       { label: "Overdue jobs", count: jobs.filter((job) => new Date(`${job.expectedDeliveryDate}T23:59:59`) < new Date() && !["DELIVERED", "CANCELLED"].includes(job.status)).length, tone: "danger" },
       { label: "Unpaid invoices", count: invoices.filter((invoice) => invoice.status !== "PAID" && invoice.status !== "CANCELLED").length, tone: "warning" },
