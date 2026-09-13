@@ -3,9 +3,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation, useParams } from 'wouter';
 import {
   Activity as ActivityIcon, ArrowDownLeft, ArrowRight, ArrowUpRight, BarChart3, Bell,
-  BriefcaseBusiness, Building2, Check, ChevronDown, CircleAlert, CircleCheck,
+  BriefcaseBusiness, Building2, CalendarDays, Check, ChevronDown, CircleAlert, CircleCheck,
   ClipboardList, Clock3, FileBarChart, FilePlus2, Filter, Gauge, Menu, MoreHorizontal, PackageCheck,
-  PanelLeftClose, PanelLeftOpen, Plus, ReceiptText,
+  PanelLeftClose, PanelLeftOpen, Plus, ReceiptText, Truck,
   RefreshCw, Search, Settings2, ShieldCheck, SlidersHorizontal, Sparkles, Users, WalletCards, X,
 } from 'lucide-react';
 import {
@@ -26,8 +26,11 @@ import NotFound from '@/pages/not-found';
 
 const queryClient = new QueryClient();
 const money = (value?: number) => `৳${(value ?? 0).toLocaleString('en-BD', { maximumFractionDigits: 0 })}`;
+const bengaliNumber = (value?: number) => (value ?? 0).toLocaleString('bn-BD', { maximumFractionDigits: 0 });
+const bengaliMoney = (value?: number) => `৳${bengaliNumber(value)}`;
 const date = (value?: string | null) => value ? new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '—';
 const dateTime = (value?: string | null) => value ? new Date(value).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+const bengaliToday = () => new Intl.DateTimeFormat('bn-BD', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
 const initials = (name = 'ZM') => name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase();
 
 function Logo({ compact = false }: { compact?: boolean }) {
@@ -122,15 +125,100 @@ function SectionCard({ children, className = '', title, action }: { children: Re
 
 function Management() {
   const { data, isLoading, isError, refetch } = useGetDashboardSummary({ range: 'month' });
-  const { data: activity } = useListActivity({ limit: 8 });
+  const { data: activity, isLoading: isActivityLoading, isError: isActivityError, refetch: refetchActivity } = useListActivity({ limit: 8 });
+  const { data: user } = useGetCurrentUser();
   if (isLoading) return <Shell><DashboardSkeleton /></Shell>;
   if (isError || !data) return <Shell><ErrorState retry={refetch} /></Shell>;
   const k = data.kpis;
-  return <Shell><div className="page-enter"><PageHeader eyebrow="Monday · 08:42 · Management desk" title="The floor, at a glance." detail="A live read on what needs a decision, what is moving, and where cash is sitting." action={<Button onClick={() => refetch()} variant="secondary" testId="button-refresh-dashboard"><RefreshCw className="h-3.5 w-3.5" />Refresh</Button>} /><div className="grid grid-cols-2 gap-3 md:grid-cols-5">{[['Jobs today', k.todayJobs, ClipboardList, 'primary'], ['Active jobs', k.activeJobs, BriefcaseBusiness, 'neutral'], ['In production', k.productionJobs, ActivityIcon, 'teal'], ['Ready to ship', k.readyJobs, PackageCheck, 'good'], ['Receivable', money(k.receivable), WalletCards, 'warn']].map(([label, value, Icon, tone], i) => <Kpi key={label as string} label={label as string} value={value as string | number} icon={Icon as typeof Gauge} tone={tone as string} delay={i} />)}</div><div className="mt-5 grid gap-5 xl:grid-cols-[1.5fr_1fr]"><SectionCard title="Pipeline by station" action={<Link href="/reception/jobs" className="text-xs font-bold text-primary" data-testid="link-view-all-jobs">View jobs <ArrowRight className="ml-1 inline h-3 w-3" /></Link>}><div className="space-y-4 p-5">{data.pipeline.map((item, i) => <div key={item.label} data-testid={`metric-pipeline-${i}`}><div className="mb-1.5 flex justify-between text-xs"><span className="font-semibold">{item.label}</span><span className="mono text-muted-foreground">{item.value}</span></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full ${i === 0 ? 'bg-primary' : i === 1 ? 'bg-accent' : i === 2 ? 'bg-foreground' : 'bg-muted-foreground'}`} style={{ width: `${Math.min(100, Math.max(6, item.value * 8))}%` }} /></div></div>)}</div></SectionCard><SectionCard title="Attention lane"><div className="divide-y divide-border">{data.attention.map((item, i) => <div className="flex items-center justify-between px-5 py-3.5" key={item.label} data-testid={`attention-${i}`}><div className="flex items-center gap-3"><span className={`h-2 w-2 rounded-full ${item.tone === 'danger' ? 'bg-destructive' : item.tone === 'warning' ? 'bg-primary' : item.tone === 'success' ? 'bg-emerald-500' : 'bg-accent'}`} /><span className="text-sm font-semibold">{item.label}</span></div><span className="mono text-sm font-medium">{item.count}</span></div>)}</div></SectionCard></div><div className="mt-5 grid gap-5 xl:grid-cols-[1.5fr_1fr]"><SectionCard title="Revenue / expense rhythm" action={<span className="mono text-[10px] uppercase text-muted-foreground">This month</span>}><RevenueChart items={data.revenueTrend} /></SectionCard><SectionCard title="Latest movement"><ActivityFeed items={activity || []} /></SectionCard></div></div></Shell>;
+  return <Shell><div className="page-enter">
+    <div className="mb-7 flex flex-col justify-between gap-5 border-b border-border pb-6 md:flex-row md:items-end">
+      <div>
+        <p className="mono mb-3 text-[10px] font-medium uppercase tracking-[.18em] text-primary" data-testid="text-management-eyebrow">ZM / Management desk</p>
+        <h1 className="display text-3xl font-extrabold tracking-tight md:text-[2.7rem]" data-testid="text-management-greeting">স্বাগতম, {user?.name || 'ম্যানেজমেন্ট টিম'}</h1>
+        <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground" data-testid="text-management-date"><CalendarDays className="h-4 w-4 text-primary" />{bengaliToday()} <span className="text-border">·</span> আজকের সারসংক্ষেপ</p>
+      </div>
+      <Button onClick={() => { refetch(); refetchActivity(); }} variant="secondary" testId="button-refresh-dashboard"><RefreshCw className="h-3.5 w-3.5" />হালনাগাদ <span className="font-normal text-muted-foreground">(Refresh)</span></Button>
+    </div>
+
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8" data-testid="grid-management-kpis">
+      <ManagementKpi label="আজকের জব" secondary="Today" value={bengaliNumber(k.todayJobs)} icon={ClipboardList} tone="blue" index={0} />
+      <ManagementKpi label="চলমান জব" secondary="Active" value={bengaliNumber(k.activeJobs)} icon={BriefcaseBusiness} tone="orange" index={1} />
+      <ManagementKpi label="উৎপাদনে চলছে" secondary="In production" value={bengaliNumber(k.productionJobs)} icon={ActivityIcon} tone="teal" index={2} />
+      <ManagementKpi label="ডেলিভারি প্রস্তুত" secondary="Ready to ship" value={bengaliNumber(k.readyJobs)} icon={Truck} tone="green" index={3} />
+      <ManagementKpi label="বকেয়া পাওনা" secondary="Receivable" value={bengaliMoney(k.receivable)} icon={CircleAlert} tone="red" index={4} />
+      <ManagementKpi label="মাসের আয়" secondary="This month" value={bengaliMoney(k.monthlyRevenue)} icon={BarChart3} tone="violet" index={5} />
+      <ManagementKpi label="মাসের খরচ" secondary="Expenses" value={bengaliMoney(k.monthlyExpense)} icon={WalletCards} tone="cyan" index={6} />
+      <ManagementKpi label="আনুমানিক লাভ" secondary="Estimated profit" value={bengaliMoney(k.estimatedProfit)} icon={PackageCheck} tone="pink" index={7} />
+    </div>
+
+    <div className="mt-6 grid gap-4 lg:grid-cols-3" data-testid="grid-quick-actions">
+      <QuickActionGroup title="রিসেপশন" secondary="Reception" detail="নতুন কাজ নিন, ক্লায়েন্ট ও জব দেখুন" icon={FilePlus2} tone="blue" actions={[
+        { label: '+ নতুন জব', href: '/reception/jobs/new', testId: 'link-management-new-job' },
+        { label: 'সব জব দেখুন', href: '/reception/jobs', testId: 'link-management-all-jobs' },
+        { label: 'ক্লায়েন্ট', href: '/clients', testId: 'link-management-clients' },
+        { label: 'রিসেপশন', href: '/reception', testId: 'link-management-reception' },
+      ]} />
+      <QuickActionGroup title="বিলিং" secondary="Billing" detail="ইনভয়েস, পেমেন্ট ও বকেয়া সামলান" icon={ReceiptText} tone="orange" actions={[
+        { label: '+ নতুন ইনভয়েস', href: '/billing/invoices', testId: 'link-management-new-invoice' },
+        { label: 'ইনভয়েস দেখুন', href: '/billing/invoices', testId: 'link-management-invoices' },
+        { label: 'পেমেন্ট', href: '/billing/payments', testId: 'link-management-payments' },
+        { label: 'বিলিং', href: '/billing', testId: 'link-management-billing' },
+      ]} />
+      <QuickActionGroup title="অ্যাকাউন্টিং" secondary="Accounting" detail="আয়, খরচ ও দৈনিক হিসাব দেখুন" icon={FileBarChart} tone="teal" actions={[
+        { label: '+ হিসাব লিখুন', href: '/accounting', testId: 'link-management-ledger' },
+        { label: 'আয়-ব্যয়', href: '/accounting', testId: 'link-management-cashbook' },
+        { label: 'ড্যাশবোর্ড', href: '/accounting', testId: 'link-management-accounting' },
+        { label: 'রিপোর্ট', href: '/accounting', testId: 'link-management-reports' },
+      ]} />
+    </div>
+
+    <SectionCard className="mt-6" title="সাম্প্রতিক জব ও কার্যক্রম" action={<Link href="/reception/jobs" className="text-xs font-bold text-primary" data-testid="link-management-recent-jobs">সব দেখুন <ArrowRight className="ml-1 inline h-3 w-3" /></Link>}>
+      {isActivityLoading ? <LoadingRows /> : isActivityError ? <ErrorState retry={refetchActivity} /> : <ManagementActivity items={activity || []} />}
+    </SectionCard>
+
+    <div className="mt-6 grid gap-5 xl:grid-cols-[1.1fr_.9fr]">
+      <SectionCard title="উৎপাদন লাইভ ভিউ" action={<Link href="/reception/jobs" className="text-xs font-bold text-primary" data-testid="link-management-pipeline">জব রেজিস্টার <ArrowRight className="ml-1 inline h-3 w-3" /></Link>}>
+        <div className="grid gap-6 p-5 lg:grid-cols-[1.25fr_.75fr]">
+          <div className="space-y-4">
+            <p className="text-xs text-muted-foreground">কোন স্টেশনে কত কাজ আছে</p>
+            {data.pipeline.map((item, i) => <div key={item.label} data-testid={`metric-pipeline-${i}`}>
+              <div className="mb-1.5 flex justify-between text-xs"><span className="font-semibold">{item.label}</span><span className="mono text-muted-foreground">{bengaliNumber(item.value)}</span></div>
+              <div className="h-2 overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full ${i === 0 ? 'bg-primary' : i === 1 ? 'bg-accent' : i === 2 ? 'bg-foreground' : 'bg-muted-foreground'}`} style={{ width: `${Math.min(100, Math.max(6, item.value * 8))}%` }} /></div>
+            </div>)}
+          </div>
+          <div className="border-t border-border pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+            <p className="mb-4 text-xs text-muted-foreground">অগ্রাধিকারের তালিকা</p>
+            <div className="space-y-3">{data.attention.map((item, i) => <div className="flex items-center justify-between" key={item.label} data-testid={`attention-${i}`}><div className="flex items-center gap-2.5"><span className={`h-2 w-2 rounded-full ${item.tone === 'danger' ? 'bg-destructive' : item.tone === 'warning' ? 'bg-primary' : item.tone === 'success' ? 'bg-emerald-500' : 'bg-accent'}`} /><span className="text-xs font-semibold">{item.label}</span></div><span className="mono text-xs font-medium">{bengaliNumber(item.count)}</span></div>)}</div>
+          </div>
+        </div>
+      </SectionCard>
+      <SectionCard title="মাসের আয়-ব্যয়ের ছন্দ" action={<span className="mono text-[10px] uppercase text-muted-foreground">Month</span>}><RevenueChart items={data.revenueTrend} /></SectionCard>
+    </div>
+  </div></Shell>;
+}
+function ManagementKpi({ label, secondary, value, icon: Icon, tone, index }: { label: string; secondary: string; value: string; icon: typeof Gauge; tone: string; index: number }) {
+  const tones: Record<string, string> = { blue: 'bg-blue-500', orange: 'bg-orange-500', green: 'bg-emerald-500', red: 'bg-red-500', violet: 'bg-violet-500', teal: 'bg-teal-500', cyan: 'bg-cyan-500', pink: 'bg-pink-500' };
+  return <div className={`page-enter stagger-${Math.min(4, index + 1)} rounded-xl border border-border bg-card p-3.5 shadow-sm md:p-4`} data-testid={`kpi-management-${secondary.toLowerCase().replaceAll(' ', '-')}`}>
+    <div className="flex items-start justify-between gap-2"><div><p className="text-[11px] font-bold leading-tight text-foreground md:text-xs">{label}</p><p className="mono mt-1 text-[8px] uppercase tracking-[.08em] text-muted-foreground">{secondary}</p></div><span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white ${tones[tone]}`}><Icon className="h-4 w-4" /></span></div>
+    <p className="display mt-4 truncate text-xl font-extrabold md:text-2xl" data-testid={`value-management-${secondary.toLowerCase().replaceAll(' ', '-')}`}>{value}</p>
+  </div>;
+}
+function QuickActionGroup({ title, secondary, detail, icon: Icon, tone, actions }: { title: string; secondary: string; detail: string; icon: typeof Gauge; tone: string; actions: { label: string; href: string; testId: string }[] }) {
+  const tones: Record<string, string> = { blue: 'bg-blue-50 text-blue-600', orange: 'bg-orange-50 text-orange-600', teal: 'bg-teal-50 text-teal-600' };
+  return <section className="rounded-xl border border-border bg-card p-4 shadow-sm md:p-5" data-testid={`action-group-${secondary.toLowerCase()}`}>
+    <div className="flex items-start gap-3"><span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${tones[tone]}`}><Icon className="h-[18px] w-[18px]" /></span><div><h2 className="text-base font-extrabold">{title} <span className="ml-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{secondary}</span></h2><p className="mt-1 text-[11px] text-muted-foreground">{detail}</p></div></div>
+    <div className="mt-4 grid grid-cols-2 gap-2">{actions.map((action) => <Link key={action.testId} href={action.href} data-testid={action.testId} className="flex min-h-9 items-center justify-center rounded-md border border-border bg-background px-2 text-[11px] font-bold text-primary transition-colors hover:border-primary hover:bg-primary/5">{action.label}</Link>)}</div>
+  </section>;
+}
+function ManagementActivity({ items }: { items: ActivityType[] }) {
+  if (!items.length) return <EmptyState title="এখনও কোনো জব নেই" detail="আপনার টিম কাজ শুরু করলে সাম্প্রতিক কার্যক্রম এখানে দেখা যাবে।" action={<Link href="/reception/jobs/new" className="text-xs font-bold text-primary" data-testid="link-management-empty-job">প্রথম জব নিন</Link>} />;
+  return <div className="grid divide-y divide-border md:grid-cols-2 md:divide-x md:divide-y-0">{items.slice(0, 8).map((item, index) => <div key={item.id} className={`flex min-h-[92px] gap-3 px-5 py-4 ${index > 1 ? 'md:border-t md:border-border' : ''}`} data-testid={`activity-management-${item.id}`}>
+    <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary"><ActivityIcon className="h-3.5 w-3.5" /></span>
+    <div className="min-w-0"><p className="truncate text-xs font-bold">{item.title}</p><p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">{item.description}</p><p className="mono mt-1.5 text-[9px] uppercase text-muted-foreground">{item.actor} · {dateTime(item.createdAt)}</p></div>
+  </div>)}</div>;
 }
 function Kpi({ label, value, icon: Icon, tone, delay }: { label: string; value: string | number; icon: typeof Gauge; tone: string; delay: number }) { return <div className={`page-enter stagger-${Math.min(4, delay + 1)} rounded-sm border border-border bg-card p-4 shadow-sm`} data-testid={`kpi-${label.toLowerCase().replaceAll(' ', '-')}`}><div className="flex items-start justify-between"><span className="mono text-[9px] uppercase tracking-[.1em] text-muted-foreground">{label}</span><Icon className={`h-4 w-4 ${tone === 'primary' ? 'text-primary' : tone === 'teal' ? 'text-accent' : tone === 'good' ? 'text-emerald-600' : tone === 'warn' ? 'text-amber-600' : 'text-muted-foreground'}`} /></div><p className="display mt-4 text-2xl font-extrabold md:text-3xl">{value}</p></div>; }
 function RevenueChart({ items }: { items: { label: string; revenue: number; expense: number }[] }) { const max = Math.max(...items.map((i) => Math.max(i.revenue, i.expense)), 1); return <div className="flex h-56 items-end gap-2 px-5 pb-5 pt-8">{items.map((item) => <div key={item.label} className="group flex flex-1 flex-col items-center gap-2"><div className="flex h-40 w-full items-end justify-center gap-1"><div title={`Revenue ${money(item.revenue)}`} className="w-[35%] rounded-t-sm bg-primary transition-all group-hover:brightness-110" style={{ height: `${Math.max(5, item.revenue / max * 100)}%` }} /><div title={`Expense ${money(item.expense)}`} className="w-[35%] rounded-t-sm bg-accent/70 transition-all group-hover:brightness-110" style={{ height: `${Math.max(5, item.expense / max * 100)}%` }} /></div><span className="mono text-[9px] text-muted-foreground">{item.label}</span></div>)}</div>; }
-function ActivityFeed({ items }: { items: ActivityType[] }) { if (!items.length) return <EmptyState title="No movement yet" detail="Activity will appear here as your team works." />; return <div className="divide-y divide-border">{items.slice(0, 6).map((item) => <div key={item.id} className="flex gap-3 px-5 py-3.5"><span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" /><div className="min-w-0"><p className="text-xs font-bold">{item.title}</p><p className="mt-0.5 truncate text-[11px] text-muted-foreground">{item.description}</p><p className="mono mt-1 text-[9px] uppercase text-muted-foreground">{item.actor} · {dateTime(item.createdAt)}</p></div></div>)}</div>; }
 function DashboardSkeleton() { return <div className="space-y-5"><div className="space-y-3"><Skeleton className="h-3 w-40" /><Skeleton className="h-10 w-80" /></div><div className="grid grid-cols-2 gap-3 md:grid-cols-5">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-28" />)}</div><div className="grid gap-5 md:grid-cols-2"><Skeleton className="h-72" /><Skeleton className="h-72" /></div></div>; }
 
 function Reception() {
