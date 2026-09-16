@@ -34,6 +34,7 @@ import { DashboardRecentActivity } from '@/components/dashboard/DashboardRecentA
 import { DashboardTopProducts } from '@/components/dashboard/DashboardTopProducts';
 import { DashboardMonthlySalesChart } from '@/components/dashboard/DashboardMonthlySalesChart';
 import { DashboardQuickLinks } from '@/components/dashboard/DashboardQuickLinks';
+import { FactoryProductionOverview } from '@/components/production/FactoryProductionOverview';
 
 const queryClient = new QueryClient();
 const money = (value?: number) => `৳${(value ?? 0).toLocaleString('en-BD', { maximumFractionDigits: 0 })}`;
@@ -558,13 +559,38 @@ function Jobs() {
       code: 'Rubber & 3D Badge',
       tagline: 'High density molding & tags',
       icon: Layers,
-      iconBg: 'bg-amber-500 text-white',
-      badgeTone: 'bg-amber-50 text-amber-700',
+      iconBg: 'bg-emerald-500 text-white',
+      badgeTone: 'bg-emerald-50 text-emerald-700',
       keywords: ['silicon', 'badge', 'pvc'],
       defaultPreviews: [
-        { id: 'sl1', companyName: 'Perry Ellis BD', item: '3D High Density Silicon Badge', quantity: '6,200 pcs', status: 'In Production', deliveryDate: '16 Sep 2026' },
+        { id: 'sl1', companyName: 'Perry Ellis BD', item: '3D High Density Silicon Badge', quantity: '6,200 pcs', status: 'Delayed', deliveryDate: '16 Sep 2026' },
         { id: 'sl2', companyName: 'Ananta Fashion Ltd.', item: 'Silicon Rubber Puller Tag', quantity: '3,800 pcs', status: 'In Production', deliveryDate: '17 Sep 2026' },
-        { id: 'sl3', companyName: 'Epyllion Group Ltd.', item: 'Matte Finish Rubber Logo', quantity: '5,000 pcs', status: 'In Production', deliveryDate: '19 Sep 2026' },
+      ],
+    },
+    {
+      id: 'painting',
+      name: 'Painting Section',
+      code: 'Water-base & Pigment',
+      tagline: 'Chest Print · Pigment',
+      icon: Tv,
+      iconBg: 'bg-amber-500 text-white',
+      badgeTone: 'bg-amber-50 text-amber-700',
+      keywords: ['paint', 'water'],
+      defaultPreviews: [
+        { id: 'pa1', companyName: 'Square Fashions', item: 'Water-base Chest Print', quantity: '3,600 pcs', status: 'In Production', deliveryDate: '18 Sep 2026' },
+      ],
+    },
+    {
+      id: 'transfer',
+      name: 'Transfer Section',
+      code: 'DTF / Heat Transfer',
+      tagline: 'Fixing & film press',
+      icon: Layers,
+      iconBg: 'bg-indigo-600 text-white',
+      badgeTone: 'bg-indigo-50 text-indigo-700',
+      keywords: ['transfer', 'dtf', 'film'],
+      defaultPreviews: [
+        { id: 'tr1', companyName: 'New Era Apparels', item: 'DTF Film Transfer Print', quantity: '1,500 yds', status: 'Idle', deliveryDate: '19 Sep 2026' },
       ],
     },
   ];
@@ -589,7 +615,77 @@ function Jobs() {
     }));
   };
 
+  const isAllView = queryParams.get('view') === 'all';
   const currentSectionConfig = sectionConfigs.find(s => s.id === activeSectionId);
+
+  // If "view=all" is requested, show full interactive jobs register table
+  if (isAllView) {
+    return (
+      <Shell>
+        <div className="page-enter space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5">
+            <div>
+              <Link
+                href="/reception/jobs"
+                className="inline-flex items-center gap-1.5 text-xs font-black text-sky-600 hover:text-sky-700 mb-2 transition-colors"
+              >
+                ← Back to Production Overview (ওভারভিউতে ফিরে যান)
+              </Link>
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
+                All Factory Orders & Jobs
+              </h1>
+              <p className="text-xs font-semibold text-slate-500 mt-1">
+                Filter and track all production floor work orders
+              </p>
+            </div>
+            <Link
+              href="/reception/jobs/new"
+              className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-amber-500 px-4 text-xs font-black text-slate-950 shadow-sm self-start sm:self-center"
+            >
+              <Plus className="h-4 w-4" />
+              New Job Order
+            </Link>
+          </div>
+
+          <SectionCard>
+            <div className="flex flex-col gap-3 border-b border-border p-4 md:flex-row">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search all jobs..."
+                  className="h-10 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-sm outline-none focus:border-primary"
+                />
+              </div>
+              <div className="relative">
+                <Filter className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="h-10 w-full appearance-none rounded-xl border border-input bg-background pl-9 pr-8 text-xs font-semibold outline-none focus:border-primary md:w-48"
+                >
+                  <option value="">All statuses</option>
+                  {Object.values(JobStatus).map(s => <option key={s} value={s}>{s.replaceAll('_', ' ')}</option>)}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              </div>
+            </div>
+
+            {isLoading ? (
+              <LoadingRows />
+            ) : isError ? (
+              <ErrorState retry={refetch} />
+            ) : allJobs.length ? (
+              <JobTable jobs={allJobs} />
+            ) : (
+              <EmptyState title="No jobs found" detail="Try adjusting your search or filters." />
+            )}
+          </SectionCard>
+        </div>
+      </Shell>
+    );
+  }
 
   // If a specific section is selected via URL (e.g. ?section=printing), show that section's drill-down view
   if (currentSectionConfig) {
@@ -610,7 +706,7 @@ function Jobs() {
                 href="/reception/jobs"
                 className="inline-flex items-center gap-1.5 text-xs font-black text-sky-600 hover:text-sky-700 mb-2 transition-colors"
               >
-                ← Back to All Sections (সব সেকশনে ফিরে যান)
+                ← Back to Production Overview (ওভারভিউতে ফিরে যান)
               </Link>
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 flex items-center gap-3">
                 <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${currentSectionConfig.iconBg} shadow-sm text-base`}>
@@ -690,90 +786,16 @@ function Jobs() {
     );
   }
 
-  // Otherwise, default to Overview Mode showing all 4 sections one after another
+  // Default Overview Mode matching the user's requested mockup design
   return (
     <Shell>
-      <div className="page-enter space-y-6">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
-              PRODUCTION & FLOOR MANAGEMENT
-            </p>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
-              Factory Sections (উৎপাদন সেকশন)
-            </h1>
-            <p className="text-xs font-semibold text-slate-500 mt-1">
-              Printing, Sublimation, Sonic, ও Silicon সেকশনের চলমান কাজ এবং অর্ডার ট্র্যাক করুন।
-            </p>
-          </div>
-
-          <Link
-            href="/reception/jobs/new"
-            className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-amber-500 px-4 text-xs font-black text-slate-950 shadow-sm self-start sm:self-center"
-            data-testid="link-new-job"
-          >
-            <Plus className="h-4 w-4" />
-            New Job Order
-          </Link>
-        </div>
-
-        {/* Top KPI Cards (Summary) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm flex items-center gap-3.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500 text-white font-black text-lg shadow-sm">
-              <ClipboardList className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="text-xs font-semibold text-slate-500">Total Factory Jobs</span>
-              <p className="text-2xl font-black text-slate-900">{data?.pagination.total ?? allJobs.length}</p>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm flex items-center gap-3.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500 text-white font-black text-lg shadow-sm">
-              <ActivityIcon className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="text-xs font-semibold text-slate-500">In Production (চলমান কাজ)</span>
-              <p className="text-2xl font-black text-slate-900">{inProdCount || 45}</p>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm flex items-center gap-3.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500 text-white font-black text-lg shadow-sm">
-              <PackageCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="text-xs font-semibold text-slate-500">Completed Orders (সম্পন্ন কাজ)</span>
-              <p className="text-2xl font-black text-slate-900">{completedCount || 76}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* 4 Factory Sections Arranged One After Another */}
-        <div className="space-y-5">
-          {sectionConfigs.map((config) => {
-            const orders = getOrdersForSection(config.keywords, config.defaultPreviews);
-            const totalCount = allJobs.filter(j =>
-              config.keywords.some(kw =>
-                (j.printingSection || '').toLowerCase().includes(kw) ||
-                (j.jobType || '').toLowerCase().includes(kw)
-              )
-            ).length || orders.length;
-
-            return (
-              <ProductionSectionCard
-                key={config.id}
-                config={config}
-                orders={orders}
-                totalJobsCount={totalCount}
-              />
-            );
-          })}
-        </div>
+      <div className="page-enter">
+        <FactoryProductionOverview jobs={allJobs} />
       </div>
     </Shell>
   );
 }
+
 
 function NewJob() {
   const { data: companies } = useListCompanies({ page: 1, pageSize: 100 });
