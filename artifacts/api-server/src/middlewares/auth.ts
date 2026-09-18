@@ -76,7 +76,9 @@ export async function requireMaster(req: Request, res: Response, next: NextFunct
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  if (!user.isMaster && user.role !== "ADMIN") {
+  const roleUpper = (user.role || "").toUpperCase();
+  const isMD = user.isMaster || roleUpper === "ADMIN" || roleUpper === "MASTER_MD" || roleUpper.includes("MD") || roleUpper.includes("MANAGING DIRECTOR");
+  if (!isMD) {
     res.status(403).json({ error: "Master MD or authorized administrator access required" });
     return;
   }

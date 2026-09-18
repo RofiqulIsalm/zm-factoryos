@@ -612,6 +612,7 @@ components:
         expectedDeliveryDate: { type: string, format: date }
         sampleRequired: { type: boolean }
         overdue: { type: boolean }
+        notes: { type: string, nullable: true }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
     JobInput:

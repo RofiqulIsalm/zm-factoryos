@@ -118,6 +118,7 @@ async function jobView(job: typeof jobsTable.$inferSelect) {
     expectedDeliveryDate: job.expectedDeliveryDate,
     sampleRequired: job.sampleRequired,
     overdue: deadline < current && !["DELIVERED", "CANCELLED"].includes(job.status),
+    notes: job.notes ?? null,
     createdAt: dateTime(job.createdAt),
     updatedAt: dateTime(job.updatedAt),
   };
@@ -281,7 +282,11 @@ router.get("/jobs", async (req, res): Promise<void> => {
   const status = params.success ? params.data.status : undefined;
   const priority = params.success ? params.data.priority : undefined;
   const filters = [
-    search ? or(ilike(jobsTable.jobNumber, `%${search}%`), ilike(jobsTable.description, `%${search}%`)) : undefined,
+    search ? or(
+      ilike(jobsTable.jobNumber, `%${search}%`),
+      ilike(jobsTable.description, `%${search}%`),
+      ilike(jobsTable.notes, `%${search}%`)
+    ) : undefined,
     status ? eq(jobsTable.status, status) : undefined,
     priority ? eq(jobsTable.priority, priority) : undefined,
   ].filter(Boolean);
@@ -290,6 +295,15 @@ router.get("/jobs", async (req, res): Promise<void> => {
   res.json(ListJobsResponse.parse({ items: await Promise.all(rows.map(jobView)), pagination: pageData(page, pageSize, Number(totalResult[0]?.value ?? 0)) }));
 });
 
+function getCompanyCode(name: string): string {
+  const clean = name.toLowerCase().trim();
+  if (!clean) return "xx";
+  if (clean.startsWith("dhaka")) return "dk";
+  const letters = clean.replace(/[^a-z0-9]/g, "");
+  if (letters.length >= 2) return letters.slice(0, 2);
+  return (letters + "x").slice(0, 2);
+}
+
 router.post("/jobs", async (req, res): Promise<void> => {
   const parsed = CreateJobBody.safeParse(req.body);
   if (!parsed.success) {
@@ -297,13 +311,65 @@ router.post("/jobs", async (req, res): Promise<void> => {
     return;
   }
   const actor = await getActor(req);
-  const dateKey = today().replaceAll("-", "").slice(2);
-  const existing = await db.select({ value: count() }).from(jobsTable).where(ilike(jobsTable.jobNumber, `JOB-${dateKey}-%`));
-  const sequence = Number(existing[0]?.value ?? 0) + 1;
+
+  // 1. Fetch the company
+  const [company] = await db
+    .select()
+    .from(companiesTable)
+    .where(eq(companiesTable.id, parsed.data.companyId))
+    .limit(1);
+
+  const companyName = company?.name || "Company";
+
+  // 2. Look for existing jobs of this company to find their established code and max sequence
+  const companyJobs = await db
+    .select({ jobNumber: jobsTable.jobNumber })
+    .from(jobsTable)
+    .where(eq(jobsTable.companyId, parsed.data.companyId));
+
+  let code = "";
+  let maxSeq = 0;
+
+  for (const j of companyJobs) {
+    const match = j.jobNumber.match(/^zm-([a-z0-9]+?)(\d+)$/i);
+    if (match) {
+      if (!code) {
+        code = match[1].toLowerCase();
+      }
+      const seq = parseInt(match[2], 10);
+      if (!isNaN(seq) && seq > maxSeq) {
+        maxSeq = seq;
+      }
+    }
+  }
+
+  // 3. If no existing zm- code for this company, generate it from the company name
+  if (!code) {
+    code = getCompanyCode(companyName);
+    // Check if any job across the system has used this prefix
+    const jobsWithCode = await db
+      .select({ jobNumber: jobsTable.jobNumber })
+      .from(jobsTable)
+      .where(ilike(jobsTable.jobNumber, `zm-${code}%`));
+
+    for (const j of jobsWithCode) {
+      const match = j.jobNumber.match(new RegExp(`^zm-${code}(\\d+)$`, "i"));
+      if (match) {
+        const seq = parseInt(match[1], 10);
+        if (!isNaN(seq) && seq > maxSeq) {
+          maxSeq = seq;
+        }
+      }
+    }
+  }
+
+  const nextSeq = maxSeq + 1;
+  const jobNumber = `zm-${code}${String(nextSeq).padStart(3, "0")}`;
+
   const [job] = await db.insert(jobsTable).values({
     ...parsed.data,
     expectedDeliveryDate: calendarDate(parsed.data.expectedDeliveryDate),
-    jobNumber: `JOB-${dateKey}-${String(sequence).padStart(4, "0")}`,
+    jobNumber,
   }).returning();
   await db.insert(jobStatusHistoryTable).values({ jobId: job.id, newStatus: job.status, actorName: actor.name, note: "Job received" });
   await db.insert(auditLogsTable).values({ userId: actor.id, userName: actor.name, action: "JOB_CREATED", entity: "JOB", entityId: job.id, newValue: job.jobNumber });
@@ -622,6 +688,80 @@ router.get("/settings/catalogs", async (_req, res): Promise<void> => {
     db.select().from(printingSectionsTable).where(eq(printingSectionsTable.active, true)).orderBy(asc(printingSectionsTable.name)),
   ]);
   res.json(GetSettingsCatalogsResponse.parse({ departments, printingSections, jobStatuses: ["DRAFT", "RECEIVED", "IN_DESIGN", "SAMPLE_PENDING", "SAMPLE_APPROVAL", "IN_PRODUCTION", "QC", "READY", "DELIVERED", "CANCELLED"] }));
+});
+
+// Section management endpoints - only Managing Director / Admin
+router.get("/settings/sections", async (_req, res): Promise<void> => {
+  const sections = await db.select().from(printingSectionsTable).orderBy(asc(printingSectionsTable.name));
+  res.json({ items: sections });
+});
+
+router.post("/settings/sections", requireMaster, async (req, res): Promise<void> => {
+  const { name } = req.body ?? {};
+  const cleanName = typeof name === "string" ? name.trim() : "";
+  if (!cleanName) {
+    res.status(400).json({ error: "Section name is required" });
+    return;
+  }
+
+  // Check if section already exists (case-insensitive)
+  const existing = await db.select().from(printingSectionsTable)
+    .where(ilike(printingSectionsTable.name, cleanName)).limit(1);
+
+  if (existing[0]) {
+    if (!existing[0].active) {
+      const [updated] = await db.update(printingSectionsTable)
+        .set({ active: true, updatedAt: new Date() })
+        .where(eq(printingSectionsTable.id, existing[0].id))
+        .returning();
+      res.json({ item: updated });
+      return;
+    }
+    res.status(409).json({ error: `Section "${cleanName}" already exists` });
+    return;
+  }
+
+  const [created] = await db.insert(printingSectionsTable).values({
+    name: cleanName,
+    active: true,
+  }).returning();
+
+  const user = await getAuthenticatedUser(req);
+  if (user) {
+    await db.insert(auditLogsTable).values({
+      userId: user.id,
+      userName: user.name,
+      action: "CREATE_SECTION",
+      entity: "PRINTING_SECTION",
+      entityId: created.id,
+      newValue: cleanName,
+    });
+  }
+
+  res.status(201).json({ item: created });
+});
+
+router.delete("/settings/sections/:id", requireMaster, async (req, res): Promise<void> => {
+  const id = req.params.id;
+  const [deleted] = await db.delete(printingSectionsTable).where(eq(printingSectionsTable.id, id)).returning();
+  if (!deleted) {
+    res.status(404).json({ error: "Section not found" });
+    return;
+  }
+
+  const user = await getAuthenticatedUser(req);
+  if (user) {
+    await db.insert(auditLogsTable).values({
+      userId: user.id,
+      userName: user.name,
+      action: "DELETE_SECTION",
+      entity: "PRINTING_SECTION",
+      entityId: id,
+      oldValue: deleted.name,
+    });
+  }
+
+  res.json({ success: true, item: deleted });
 });
 
 export default router;

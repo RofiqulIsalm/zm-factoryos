@@ -110,7 +110,7 @@ export function ProductionSectionCard({ config, orders, totalJobsCount }: Produc
 
               {order.deliveryDate && (
                 <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-medium">
-                  <span>Delivery Promise: <strong className="text-slate-600 font-bold">{order.deliveryDate}</strong></span>
+                  <span>Received Date: <strong className="text-slate-600 font-bold">{order.deliveryDate}</strong></span>
                   <span className="text-sky-600 font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                     Job Card <ArrowUpRight className="h-3 w-3" />
                   </span>

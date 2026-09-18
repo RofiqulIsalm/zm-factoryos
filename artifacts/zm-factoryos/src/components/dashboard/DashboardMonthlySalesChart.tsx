@@ -83,7 +83,7 @@ export function DashboardMonthlySalesChart() {
               tickFormatter={(v) => (v === 0 ? '0' : `${v}L`)}
             />
             <Tooltip
-              formatter={(val: number | string | undefined) => [`৳ ${(Number(val || 0) * 100000).toLocaleString('en-IN')}`, 'Sales']}
+              formatter={(val: any) => [`৳ ${(Number(val || 0) * 100000).toLocaleString('en-IN')}`, 'Sales']}
               contentStyle={{
                 backgroundColor: '#ffffff',
                 borderRadius: '12px',

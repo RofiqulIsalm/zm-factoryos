@@ -151,6 +151,7 @@ export const ListJobsResponse = zod.object({
   "expectedDeliveryDate": zod.coerce.date(),
   "sampleRequired": zod.boolean().optional(),
   "overdue": zod.boolean().optional(),
+  "notes": zod.string().optional().nullable(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })),
@@ -216,6 +217,7 @@ export const CreateJobResponse = zod.object({
   "expectedDeliveryDate": zod.coerce.date(),
   "sampleRequired": zod.boolean().optional(),
   "overdue": zod.boolean().optional(),
+  "notes": zod.string().optional().nullable(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })
@@ -255,6 +257,7 @@ export const GetJobResponse = zod.object({
   "expectedDeliveryDate": zod.coerce.date(),
   "sampleRequired": zod.boolean().optional(),
   "overdue": zod.boolean().optional(),
+  "notes": zod.string().optional().nullable(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 }).and(zod.object({
@@ -323,6 +326,7 @@ export const UpdateJobResponse = zod.object({
   "expectedDeliveryDate": zod.coerce.date(),
   "sampleRequired": zod.boolean().optional(),
   "overdue": zod.boolean().optional(),
+  "notes": zod.string().optional().nullable(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })
@@ -368,6 +372,7 @@ export const UpdateJobStatusResponse = zod.object({
   "expectedDeliveryDate": zod.coerce.date(),
   "sampleRequired": zod.boolean().optional(),
   "overdue": zod.boolean().optional(),
+  "notes": zod.string().optional().nullable(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date().optional()
 })

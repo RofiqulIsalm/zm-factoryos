@@ -1,13 +1,13 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
+import React, { useState, type FormEvent, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation, useParams } from 'wouter';
 import {
   Activity as ActivityIcon, ArrowDownLeft, ArrowRight, ArrowUpRight, BarChart3, Bell,
-  BriefcaseBusiness, Building2, CalendarDays, Check, ChevronDown, CircleAlert, CircleCheck,
+  BriefcaseBusiness, Building2, CalendarDays, Check, ChevronDown, ChevronRight, CircleAlert, CircleCheck,
   ClipboardList, Clock3, FileBarChart, FilePlus2, Filter, Gauge, Menu, MoreHorizontal, PackageCheck,
   PanelLeftClose, PanelLeftOpen, Plus, ReceiptText, Truck,
   RefreshCw, Search, Settings2, ShieldCheck, SlidersHorizontal, Sparkles, Users, WalletCards, X,
-  Tv, Image as ImageIcon, Layers,
+  Tv, Image as ImageIcon, Layers, Factory, Shirt,
 } from 'lucide-react';
 import {
   getGetAccountingSummaryQueryKey, getGetBillingSummaryQueryKey, getListCompaniesQueryKey,
@@ -35,6 +35,10 @@ import { DashboardTopProducts } from '@/components/dashboard/DashboardTopProduct
 import { DashboardMonthlySalesChart } from '@/components/dashboard/DashboardMonthlySalesChart';
 import { DashboardQuickLinks } from '@/components/dashboard/DashboardQuickLinks';
 import { FactoryProductionOverview } from '@/components/production/FactoryProductionOverview';
+import { NewJobOrderPage } from '@/components/production/NewJobOrderPage';
+import { AllFactoryOrdersPage } from '@/components/production/AllFactoryOrdersPage';
+import { JobOrderViewPage } from '@/components/production/JobOrderViewPage';
+import { ManageSectionsPage } from '@/components/admin/ManageSectionsPage';
 
 const queryClient = new QueryClient();
 const money = (value?: number) => `৳${(value ?? 0).toLocaleString('en-BD', { maximumFractionDigits: 0 })}`;
@@ -88,20 +92,44 @@ function LoadingRows() { return <div className="space-y-3 p-5">{[1, 2, 3, 4].map
 function ErrorState({ retry }: { retry: () => void }) { return <div className="flex flex-col items-center justify-center gap-3 p-12 text-center"><CircleAlert className="h-8 w-8 text-destructive" /><p className="text-sm font-semibold">Could not load this view.</p><Button variant="secondary" onClick={retry} testId="button-retry"><RefreshCw className="h-4 w-4" />Retry</Button></div>; }
 function EmptyState({ title, detail, action }: { title: string; detail: string; action?: ReactNode }) { return <div className="flex flex-col items-center justify-center gap-2 p-12 text-center"><div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary"><PackageCheck className="h-5 w-5" /></div><h3 className="display text-lg font-extrabold">{title}</h3><p className="max-w-xs text-sm text-muted-foreground">{detail}</p>{action && <div className="mt-3">{action}</div>}</div>; }
 
-const nav = [
+interface NavChild {
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tab: 'all' | 'production' | 'sample';
+}
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children?: NavChild[];
+}
+
+const nav: NavItem[] = [
   { label: 'Dashboard', href: '/md', icon: Gauge },
-  { label: 'Production', href: '/reception/jobs', icon: ActivityIcon },
-  { label: 'Job Order', href: '/reception/jobs/new', icon: ClipboardList },
+  {
+    label: 'Order List',
+    href: '/reception/jobs',
+    icon: ClipboardList,
+    children: [
+      { label: 'All Orders', href: '/reception/jobs', icon: Layers, tab: 'all' },
+      { label: 'Production', href: '/reception/jobs?tab=production', icon: Factory, tab: 'production' },
+      { label: 'Sample', href: '/reception/jobs?tab=sample', icon: Shirt, tab: 'sample' },
+    ],
+  },
   { label: 'Customer', href: '/clients', icon: Building2 },
   { label: 'Billing', href: '/billing', icon: ReceiptText },
   { label: 'Accounts', href: '/accounting', icon: WalletCards },
 ];
 const operationsNav = [
+  { label: 'Manage Sections', href: '/admin/sections', icon: Layers },
   { label: 'Stock & Inventory', href: '/accounting', icon: PackageCheck },
   { label: 'Audit Activity', href: '/admin/audit-logs', icon: ShieldCheck },
   { label: 'Catalog Settings', href: '/settings', icon: Settings2 },
 ];
 const settingsNav = [
+  { label: 'Manage Sections', href: '/admin/sections', icon: Layers },
   { label: 'User Management', href: '/admin/users', icon: Users },
   { label: 'Company Profile', href: '/settings', icon: Building2 },
   { label: 'System Settings', href: '/settings', icon: Settings2 },
@@ -110,11 +138,27 @@ const settingsNav = [
 function Shell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [orderListExpanded, setOrderListExpanded] = useState(true);
+  const [searchQuery, setSearchQuery] = useState(() => (typeof window !== 'undefined' ? window.location.search : ''));
   const [location, setLocation] = useLocation();
   const { data: user, isLoading } = useGetCurrentUser();
   const { data: notifications } = useListNotifications();
   const markRead = useMarkNotificationRead();
   const unread = notifications?.filter((n) => !n.read).length ?? 0;
+
+  React.useEffect(() => {
+    const handleNavEvent = () => {
+      setSearchQuery(typeof window !== 'undefined' ? window.location.search : '');
+    };
+    window.addEventListener('popstate', handleNavEvent);
+    window.addEventListener('pushstate', handleNavEvent);
+    window.addEventListener('replacestate', handleNavEvent);
+    return () => {
+      window.removeEventListener('popstate', handleNavEvent);
+      window.removeEventListener('pushstate', handleNavEvent);
+      window.removeEventListener('replacestate', handleNavEvent);
+    };
+  }, []);
 
   const side = (
     <aside className={`${collapsed ? 'w-[76px]' : 'w-[250px]'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} fixed inset-y-0 left-0 z-40 flex flex-col border-r border-[#15263a] bg-[#0b1b2b] text-slate-200 transition-all duration-300 shadow-xl`}>
@@ -148,20 +192,104 @@ function Shell({ children }: { children: ReactNode }) {
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
         {/* Main Section */}
         <nav className="space-y-1.5">
-          {nav.map(({ label, href, icon: Icon }) => {
-            const isActive = location === href || (href === '/reception/jobs' && location.startsWith('/reception/jobs/'));
+          {nav.map((item) => {
+            const { label, href, icon: Icon, children } = item;
+            const isOrderList = href === '/reception/jobs';
+            const isOrderListRoute =
+              location === '/reception/jobs' ||
+              (location.startsWith('/reception/jobs/') && location !== '/reception/jobs/new');
+
+            const isMainActive = isOrderList ? isOrderListRoute : location === href;
+
+            if (children && !collapsed) {
+              return (
+                <div key={label} className="space-y-1">
+                  <div
+                    className={`group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
+                      isMainActive
+                        ? 'bg-[#13283f] text-white border border-amber-500/30'
+                        : 'text-slate-300 hover:bg-[#13283f] hover:text-white'
+                    }`}
+                  >
+                    <Link
+                      href={href}
+                      onClick={() => {
+                        setMobileOpen(false);
+                        window.dispatchEvent(new Event('pushstate'));
+                      }}
+                      className="flex flex-1 items-center gap-3"
+                    >
+                      <Icon className={`h-4 w-4 shrink-0 ${isMainActive ? 'text-amber-400' : 'text-slate-400 group-hover:text-white'}`} />
+                      <span>{label}</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOrderListExpanded(!orderListExpanded);
+                      }}
+                      className="p-1 text-slate-400 hover:text-white"
+                      title="Toggle Submenu"
+                    >
+                      {orderListExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+
+                  {orderListExpanded && (
+                    <div className="ml-3 pl-3 border-l border-[#1b3450] space-y-1 py-0.5">
+                      {children.map((child) => {
+                        const ChildIcon = child.icon;
+                        let isChildActive = false;
+                        if (isOrderListRoute) {
+                          if (child.tab === 'production') {
+                            isChildActive = searchQuery.includes('tab=production');
+                          } else if (child.tab === 'sample') {
+                            isChildActive = searchQuery.includes('tab=sample');
+                          } else {
+                            isChildActive = !searchQuery.includes('tab=production') && !searchQuery.includes('tab=sample');
+                          }
+                        }
+
+                        return (
+                          <Link
+                            key={child.label}
+                            href={child.href}
+                            onClick={() => {
+                              setMobileOpen(false);
+                              window.dispatchEvent(new Event('pushstate'));
+                            }}
+                            className={`group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[11px] font-bold transition-all ${
+                              isChildActive
+                                ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                                : 'text-slate-400 hover:bg-[#13283f] hover:text-slate-200'
+                            }`}
+                          >
+                            <ChildIcon className={`h-3.5 w-3.5 shrink-0 ${isChildActive ? 'text-slate-950' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                            <span>{child.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <Link
                 key={label}
                 href={href}
-                onClick={() => setMobileOpen(false)}
+                onClick={() => {
+                  setMobileOpen(false);
+                  window.dispatchEvent(new Event('pushstate'));
+                }}
                 className={`group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
-                  isActive
+                  isMainActive
                     ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
                     : 'text-slate-300 hover:bg-[#13283f] hover:text-white'
                 }`}
               >
-                <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-slate-950' : 'text-slate-400 group-hover:text-white'}`} />
+                <Icon className={`h-4 w-4 shrink-0 ${isMainActive ? 'text-slate-950' : 'text-slate-400 group-hover:text-white'}`} />
                 {!collapsed && <span>{label}</span>}
               </Link>
             );
@@ -267,9 +395,21 @@ function Shell({ children }: { children: ReactNode }) {
               <span className="text-slate-400">🏠</span>
               <span>ZM</span>
               <span className="text-slate-300">/</span>
-              <span className="uppercase text-slate-800">
-                {location === '/md' ? 'DASHBOARD' : location.split('/').filter(Boolean).slice(-1)[0]?.toUpperCase() || 'DASHBOARD'}
-              </span>
+              {location.startsWith('/reception/jobs/') && location !== '/reception/jobs/new' ? (
+                <>
+                  <Link href="/reception/jobs" className="hover:text-slate-900 transition-colors">ORDER LIST</Link>
+                  <span className="text-slate-300">/</span>
+                  <span className="text-slate-900 font-black uppercase">
+                    {location.replace('/reception/jobs/', '')}
+                  </span>
+                </>
+              ) : location.startsWith('/reception/jobs') ? (
+                <span className="text-slate-900 font-black uppercase">ORDER LIST</span>
+              ) : (
+                <span className="uppercase text-slate-800">
+                  {location === '/md' ? 'DASHBOARD' : location.split('/').filter(Boolean).slice(-1)[0]?.toUpperCase() || 'DASHBOARD'}
+                </span>
+              )}
             </div>
           </div>
 
@@ -280,7 +420,7 @@ function Shell({ children }: { children: ReactNode }) {
               <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search job, style, customer..."
                 className="h-9 w-48 lg:w-64 rounded-xl border border-slate-200 bg-slate-50/60 pl-8 pr-3 text-xs font-medium text-slate-700 outline-none transition focus:border-sky-500 focus:bg-white"
               />
             </div>
@@ -481,551 +621,165 @@ function DashboardSkeleton() { return <div className="space-y-5"><div className=
 function Reception() {
   const { data, isLoading, isError, refetch } = useListJobs({ page: 1, pageSize: 8 });
   const jobs = data?.items ?? [];
-  return <Shell><div className="page-enter"><PageHeader eyebrow="Front desk · Live intake" title="Keep the handover clean." detail="Receive work, confirm the brief, and keep every client promise visible." action={<Link href="/reception/jobs/new" className="inline-flex min-h-10 items-center gap-2 rounded-sm bg-primary px-4 text-xs font-extrabold text-primary-foreground shadow-[3px_3px_0_hsl(var(--accent))]" data-testid="link-receive-job"><Plus className="h-4 w-4" />Receive a job</Link>} /><div className="grid gap-4 md:grid-cols-3"><SectionCard className="bg-foreground text-background"><div className="p-5"><p className="mono text-[10px] uppercase tracking-[.16em] text-background/55">Open work orders</p><p className="display mt-5 text-5xl font-extrabold">{data?.pagination.total ?? '—'}</p><p className="mt-2 text-xs text-background/60">Across all production stations</p></div></SectionCard><SectionCard><div className="p-5"><p className="mono text-[10px] uppercase tracking-[.16em] text-muted-foreground">Awaiting sample</p><p className="display mt-5 text-5xl font-extrabold text-primary">{jobs.filter(j => j.sampleRequired && j.status !== JobStatus.DELIVERED).length}</p><p className="mt-2 text-xs text-muted-foreground">Need client sign-off</p></div></SectionCard><SectionCard><div className="p-5"><p className="mono text-[10px] uppercase tracking-[.16em] text-muted-foreground">Due this week</p><p className="display mt-5 text-5xl font-extrabold text-accent">{jobs.filter(j => !j.overdue).length}</p><p className="mt-2 text-xs text-muted-foreground">Promise dates in view</p></div></SectionCard></div><SectionCard title="Latest jobs" className="mt-5" action={<Link href="/reception/jobs" className="text-xs font-bold text-primary" data-testid="link-reception-all-jobs">Open register <ArrowRight className="ml-1 inline h-3 w-3" /></Link>}>{isLoading ? <LoadingRows /> : isError ? <ErrorState retry={refetch} /> : jobs.length ? <JobTable jobs={jobs} /> : <EmptyState title="The intake board is clear" detail="No jobs have been received yet." action={<Link href="/reception/jobs/new" className="text-xs font-bold text-primary" data-testid="link-empty-receive-job">Receive your first job</Link>} />}</SectionCard></div></Shell>;
+  return <Shell><div className="page-enter"><PageHeader eyebrow="Front desk · Live intake" title="Keep the handover clean." detail="Receive work, confirm the brief, and keep every client promise visible." action={<Link href="/reception/jobs/new" className="inline-flex min-h-10 items-center gap-2 rounded-sm bg-primary px-4 text-xs font-extrabold text-primary-foreground shadow-[3px_3px_0_hsl(var(--accent))]" data-testid="link-receive-job"><Plus className="h-4 w-4" />Receive a job</Link>} /><div className="grid gap-4 md:grid-cols-3"><SectionCard className="bg-foreground text-background"><div className="p-5"><p className="mono text-[10px] uppercase tracking-[.16em] text-background/55">Open work orders</p><p className="display mt-5 text-5xl font-extrabold">{data?.pagination.total ?? '—'}</p><p className="mt-2 text-xs text-background/60">Across all production stations</p></div></SectionCard><SectionCard><div className="p-5"><p className="mono text-[10px] uppercase tracking-[.16em] text-muted-foreground">Awaiting sample</p><p className="display mt-5 text-5xl font-extrabold text-primary">{jobs.filter(j => j.sampleRequired && j.status !== JobStatus.DELIVERED).length}</p><p className="mt-2 text-xs text-muted-foreground">Need client sign-off</p></div></SectionCard><SectionCard><div className="p-5"><p className="mono text-[10px] uppercase tracking-[.16em] text-muted-foreground">Due this week</p><p className="display mt-5 text-5xl font-extrabold text-accent">{jobs.filter(j => !j.overdue).length}</p><p className="mt-2 text-xs text-muted-foreground">Received dates in view</p></div></SectionCard></div><SectionCard title="Latest jobs" className="mt-5" action={<Link href="/reception/jobs" className="text-xs font-bold text-primary" data-testid="link-reception-all-jobs">Open register <ArrowRight className="ml-1 inline h-3 w-3" /></Link>}>{isLoading ? <LoadingRows /> : isError ? <ErrorState retry={refetch} /> : jobs.length ? <JobTable jobs={jobs} /> : <EmptyState title="The intake board is clear" detail="No jobs have been received yet." action={<Link href="/reception/jobs/new" className="text-xs font-bold text-primary" data-testid="link-empty-receive-job">Receive your first job</Link>} />}</SectionCard></div></Shell>;
 }
 
 function StatusTone(status: string): 'neutral' | 'good' | 'warn' | 'danger' | 'teal' { if (([JobStatus.DELIVERED, JobStatus.READY] as string[]).includes(status)) return 'good'; if (([JobStatus.CANCELLED] as string[]).includes(status)) return 'danger'; if (([JobStatus.SAMPLE_PENDING, JobStatus.SAMPLE_APPROVAL, JobStatus.QC] as string[]).includes(status)) return 'warn'; if (([JobStatus.IN_PRODUCTION, JobStatus.IN_DESIGN] as string[]).includes(status)) return 'teal'; return 'neutral'; }
-function JobTable({ jobs }: { jobs: Job[] }) { return <div className="overflow-x-auto"><table className="data-table w-full min-w-[760px] text-left"><thead><tr><th className="px-5 py-3">Job</th><th className="px-5 py-3">Client</th><th className="px-5 py-3">Station</th><th className="px-5 py-3">Promise</th><th className="px-5 py-3">Status</th><th className="px-5 py-3" /></tr></thead><tbody>{jobs.map((job) => <tr key={job.id} data-testid={`row-job-${job.id}`}><td className="px-5 py-4"><Link href={`/reception/jobs/${job.id}`} className="font-bold text-primary hover:underline" data-testid={`link-job-${job.id}`}>{job.jobNumber}</Link><p className="mt-1 max-w-[180px] truncate text-xs text-muted-foreground">{job.jobType}</p></td><td className="px-5 py-4"><p className="text-sm font-semibold">{job.companyName}</p><p className="mt-1 text-xs text-muted-foreground">{job.contactPerson}</p></td><td className="px-5 py-4 text-xs font-semibold">{job.printingSection}</td><td className="px-5 py-4"><span className={`text-xs font-bold ${job.overdue ? 'text-destructive' : ''}`}>{date(job.expectedDeliveryDate)}</span>{job.overdue && <p className="mt-1 text-[10px] font-bold uppercase text-destructive">Overdue</p>}</td><td className="px-5 py-4"><Badge tone={StatusTone(job.status)}>{job.status.replaceAll('_', ' ')}</Badge></td><td className="px-5 py-4 text-right"><Link href={`/reception/jobs/${job.id}`} data-testid={`link-open-job-${job.id}`}><ArrowRight className="ml-auto h-4 w-4 text-muted-foreground" /></Link></td></tr>)}</tbody></table></div>; }
+function parseJobDetails(job: Job) {
+  let challanNo = '';
+  let styleNo = '';
+  let color = '';
+  let size = '';
+  let part = '';
+  const notes = (job as any).notes;
+  if (notes) {
+    try {
+      const parsed = typeof notes === 'object' ? notes : JSON.parse(notes);
+      if (parsed?.challanNumber) challanNo = parsed.challanNumber;
+      if (parsed?.styleNumber) styleNo = parsed.styleNumber;
+      if (parsed?.color) color = parsed.color;
+      if (parsed?.size) size = parsed.size;
+      if (parsed?.part) part = parsed.part;
+    } catch {
+      const challanMatch = String(notes).match(/চালান[:\s]*([^\s|]+)/i) || String(notes).match(/challan[:\s]*([^\s|]+)/i);
+      if (challanMatch) challanNo = challanMatch[1];
+      const styleMatch = String(notes).match(/স্টাইল[:\s]*([^\s|]+)/i) || String(notes).match(/style[:\s]*([^\s|]+)/i);
+      if (styleMatch) styleNo = styleMatch[1];
+    }
+  }
+  if (!styleNo && job.description) {
+    const styleMatch = job.description.match(/Style:\s*([^·|]+)/i);
+    if (styleMatch) styleNo = styleMatch[1].trim();
+    const colorMatch = job.description.match(/Color:\s*([^·|]+)/i);
+    if (colorMatch) color = colorMatch[1].trim();
+    const sizeMatch = job.description.match(/Size:\s*([^·|]+)/i);
+    if (sizeMatch) size = sizeMatch[1].trim();
+  }
+  return { challanNo, styleNo, color, size, part };
+}
+
+function JobTable({ jobs }: { jobs: Job[] }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="data-table w-full min-w-[820px] text-left">
+        <thead>
+          <tr>
+            <th className="px-5 py-3">Job / Style</th>
+            <th className="px-5 py-3">Client & Challan</th>
+            <th className="px-5 py-3">Order Qty</th>
+            <th className="px-5 py-3">Station</th>
+            <th className="px-5 py-3">Received Date</th>
+            <th className="px-5 py-3">Status</th>
+            <th className="px-5 py-3" />
+          </tr>
+        </thead>
+        <tbody>
+          {jobs.map((job) => {
+            const { challanNo, styleNo, color, size } = parseJobDetails(job);
+            return (
+              <tr key={job.id} data-testid={`row-job-${job.id}`} className="hover:bg-slate-50/50 transition">
+                <td className="px-5 py-3.5">
+                  <Link
+                    href={`/reception/jobs/${job.id}`}
+                    className="font-black text-primary hover:underline text-xs"
+                    data-testid={`link-job-${job.id}`}
+                  >
+                    {job.jobNumber}
+                  </Link>
+                  {styleNo ? (
+                    <p className="mt-0.5 text-xs font-bold text-slate-800">
+                      Style: <span className="text-blue-600 font-extrabold">{styleNo}</span>
+                      {color && <span className="text-slate-400 font-medium"> · {color}</span>}
+                      {size && <span className="text-slate-400 font-medium"> · {size}</span>}
+                    </p>
+                  ) : (
+                    <p className="mt-0.5 max-w-[200px] truncate text-xs text-muted-foreground">
+                      {job.jobType}
+                    </p>
+                  )}
+                </td>
+                <td className="px-5 py-3.5">
+                  <p className="text-xs font-bold text-slate-900">{job.companyName}</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    {challanNo ? (
+                      <span className="font-semibold text-slate-600">Challan: #{challanNo}</span>
+                    ) : (
+                      job.contactPerson
+                    )}
+                  </p>
+                </td>
+                <td className="px-5 py-3.5">
+                  <span className="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-800">
+                    {(job.quantity || 0).toLocaleString('en-IN')} pcs
+                  </span>
+                </td>
+                <td className="px-5 py-3.5 text-xs font-semibold text-slate-700">{job.printingSection}</td>
+                <td className="px-5 py-3.5">
+                  <span className="text-xs font-bold text-slate-700">
+                    {date(job.createdAt)}
+                  </span>
+                </td>
+                <td className="px-5 py-3.5">
+                  <Badge tone={StatusTone(job.status)}>{job.status.replaceAll('_', ' ')}</Badge>
+                </td>
+                <td className="px-5 py-3.5 text-right">
+                  <Link href={`/reception/jobs/${job.id}`} data-testid={`link-open-job-${job.id}`}>
+                    <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground hover:text-primary transition" />
+                  </Link>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 function Jobs() {
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
-  const [location] = useLocation();
-
-  // Check URL search params for ?section=printing etc.
   const queryParams = new URLSearchParams(window.location.search);
-  const activeSectionId = queryParams.get('section');
+  const isOverview = queryParams.get('view') === 'overview';
+  const { data } = useListJobs({ page: 1, pageSize: 50 });
 
-  const { data, isLoading, isError, refetch } = useListJobs({
-    search: search || undefined,
-    status: (status || undefined) as JobStatus | undefined,
-    page: 1,
-    pageSize: 50,
-  });
-  
-  const allJobs = data?.items ?? [];
-  const inProdCount = allJobs.filter(j => j.status === JobStatus.IN_PRODUCTION).length;
-  const completedCount = allJobs.filter(j => j.status === JobStatus.READY || j.status === JobStatus.DELIVERED).length;
-
-  const sectionConfigs = [
-    {
-      id: 'printing',
-      name: 'Printing Section',
-      code: 'Screen / Table',
-      tagline: 'Chest, sleeve & pigment prints',
-      icon: Tv,
-      iconBg: 'bg-indigo-500 text-white',
-      badgeTone: 'bg-indigo-50 text-indigo-700',
-      keywords: ['print', 'screen'],
-      defaultPreviews: [
-        { id: 'p1', companyName: 'Apex Holdings Ltd.', item: 'Chest Print (Single Jersey)', quantity: '4,500 pcs', status: 'In Production', deliveryDate: '16 Sep 2026' },
-        { id: 'p2', companyName: 'Target Garments', item: 'Pigment Sleeve Print', quantity: '2,800 pcs', status: 'In Production', deliveryDate: '17 Sep 2026' },
-        { id: 'p3', companyName: 'Square Fashions Ltd.', item: 'Water-base Chest Print', quantity: '3,600 pcs', status: 'In Production', deliveryDate: '18 Sep 2026' },
-      ],
-    },
-    {
-      id: 'sublimation',
-      name: 'Sublimation Section',
-      code: 'Heat Transfer',
-      tagline: 'All-over print & sports tape',
-      icon: ImageIcon,
-      iconBg: 'bg-sky-500 text-white',
-      badgeTone: 'bg-sky-50 text-sky-700',
-      keywords: ['sublimation', 'heat'],
-      defaultPreviews: [
-        { id: 's1', companyName: 'H&M Sourcing Bangladesh', item: 'Polyester Sports Jersey', quantity: '3,200 yds', status: 'In Production', deliveryDate: '15 Sep 2026' },
-        { id: 's2', companyName: 'New Era Apparels', item: 'Sublimation Ribbon / Tape', quantity: '1,500 yds', status: 'In Production', deliveryDate: '16 Sep 2026' },
-        { id: 's3', companyName: 'Mondol Group Ltd.', item: 'All-over Sublimation Roll', quantity: '2,400 yds', status: 'In Production', deliveryDate: '18 Sep 2026' },
-      ],
-    },
-    {
-      id: 'sonic',
-      name: 'Sonic Section',
-      code: 'Ultrasonic / Emboss',
-      tagline: 'High-frequency welding & cut',
-      icon: Sparkles,
-      iconBg: 'bg-purple-500 text-white',
-      badgeTone: 'bg-purple-50 text-purple-700',
-      keywords: ['sonic', 'ultra', 'emboss'],
-      defaultPreviews: [
-        { id: 'sn1', companyName: 'Walmart Global BD', item: 'Sonic Weld Neck Label', quantity: '12,000 pcs', status: 'In Production', deliveryDate: '17 Sep 2026' },
-        { id: 'sn2', companyName: 'Dekko Group Ltd.', item: 'Ultrasonic Cut Hemming', quantity: '8,500 pcs', status: 'In Production', deliveryDate: '18 Sep 2026' },
-        { id: 'sn3', companyName: 'Palmal Group BD', item: 'Emboss Care Label Patch', quantity: '15,000 pcs', status: 'In Production', deliveryDate: '19 Sep 2026' },
-      ],
-    },
-    {
-      id: 'silicon',
-      name: 'Silicon Section',
-      code: 'Rubber & 3D Badge',
-      tagline: 'High density molding & tags',
-      icon: Layers,
-      iconBg: 'bg-emerald-500 text-white',
-      badgeTone: 'bg-emerald-50 text-emerald-700',
-      keywords: ['silicon', 'badge', 'pvc'],
-      defaultPreviews: [
-        { id: 'sl1', companyName: 'Perry Ellis BD', item: '3D High Density Silicon Badge', quantity: '6,200 pcs', status: 'Delayed', deliveryDate: '16 Sep 2026' },
-        { id: 'sl2', companyName: 'Ananta Fashion Ltd.', item: 'Silicon Rubber Puller Tag', quantity: '3,800 pcs', status: 'In Production', deliveryDate: '17 Sep 2026' },
-      ],
-    },
-    {
-      id: 'painting',
-      name: 'Painting Section',
-      code: 'Water-base & Pigment',
-      tagline: 'Chest Print · Pigment',
-      icon: Tv,
-      iconBg: 'bg-amber-500 text-white',
-      badgeTone: 'bg-amber-50 text-amber-700',
-      keywords: ['paint', 'water'],
-      defaultPreviews: [
-        { id: 'pa1', companyName: 'Square Fashions', item: 'Water-base Chest Print', quantity: '3,600 pcs', status: 'In Production', deliveryDate: '18 Sep 2026' },
-      ],
-    },
-    {
-      id: 'transfer',
-      name: 'Transfer Section',
-      code: 'DTF / Heat Transfer',
-      tagline: 'Fixing & film press',
-      icon: Layers,
-      iconBg: 'bg-indigo-600 text-white',
-      badgeTone: 'bg-indigo-50 text-indigo-700',
-      keywords: ['transfer', 'dtf', 'film'],
-      defaultPreviews: [
-        { id: 'tr1', companyName: 'New Era Apparels', item: 'DTF Film Transfer Print', quantity: '1,500 yds', status: 'Idle', deliveryDate: '19 Sep 2026' },
-      ],
-    },
-  ];
-
-  // Helper to extract orders for a section
-  const getOrdersForSection = (keywords: string[], defaults: typeof sectionConfigs[0]['defaultPreviews']) => {
-    const matched = allJobs.filter(j =>
-      keywords.some(kw =>
-        (j.printingSection || '').toLowerCase().includes(kw) ||
-        (j.jobType || '').toLowerCase().includes(kw)
-      )
-    );
-    if (matched.length === 0) return defaults;
-    return matched.slice(0, 4).map(j => ({
-      id: j.id,
-      jobNumber: j.jobNumber,
-      companyName: j.companyName || 'Factory Client',
-      item: j.jobType || 'Production Batch',
-      quantity: `${(j.quantity || 1000).toLocaleString('en-IN')} pcs`,
-      deliveryDate: date(j.expectedDeliveryDate),
-      status: j.status.replaceAll('_', ' '),
-    }));
-  };
-
-  const isAllView = queryParams.get('view') === 'all';
-  const currentSectionConfig = sectionConfigs.find(s => s.id === activeSectionId);
-
-  // If "view=all" is requested, show full interactive jobs register table
-  if (isAllView) {
+  if (isOverview) {
     return (
       <Shell>
-        <div className="page-enter space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5">
-            <div>
-              <Link
-                href="/reception/jobs"
-                className="inline-flex items-center gap-1.5 text-xs font-black text-sky-600 hover:text-sky-700 mb-2 transition-colors"
-              >
-                ← Back to Production Overview (ওভারভিউতে ফিরে যান)
-              </Link>
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
-                All Factory Orders & Jobs
-              </h1>
-              <p className="text-xs font-semibold text-slate-500 mt-1">
-                Filter and track all production floor work orders
-              </p>
-            </div>
-            <Link
-              href="/reception/jobs/new"
-              className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-amber-500 px-4 text-xs font-black text-slate-950 shadow-sm self-start sm:self-center"
-            >
-              <Plus className="h-4 w-4" />
-              New Job Order
-            </Link>
-          </div>
-
-          <SectionCard>
-            <div className="flex flex-col gap-3 border-b border-border p-4 md:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search all jobs..."
-                  className="h-10 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-sm outline-none focus:border-primary"
-                />
-              </div>
-              <div className="relative">
-                <Filter className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="h-10 w-full appearance-none rounded-xl border border-input bg-background pl-9 pr-8 text-xs font-semibold outline-none focus:border-primary md:w-48"
-                >
-                  <option value="">All statuses</option>
-                  {Object.values(JobStatus).map(s => <option key={s} value={s}>{s.replaceAll('_', ' ')}</option>)}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-              </div>
-            </div>
-
-            {isLoading ? (
-              <LoadingRows />
-            ) : isError ? (
-              <ErrorState retry={refetch} />
-            ) : allJobs.length ? (
-              <JobTable jobs={allJobs} />
-            ) : (
-              <EmptyState title="No jobs found" detail="Try adjusting your search or filters." />
-            )}
-          </SectionCard>
+        <div className="page-enter">
+          <FactoryProductionOverview jobs={data?.items ?? []} />
         </div>
       </Shell>
     );
   }
 
-  // If a specific section is selected via URL (e.g. ?section=printing), show that section's drill-down view
-  if (currentSectionConfig) {
-    const sectionJobs = allJobs.filter(j =>
-      currentSectionConfig.keywords.some(kw =>
-        (j.printingSection || '').toLowerCase().includes(kw) ||
-        (j.jobType || '').toLowerCase().includes(kw)
-      )
-    );
-
-    return (
-      <Shell>
-        <div className="page-enter space-y-5">
-          {/* Back Button & Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5">
-            <div>
-              <Link
-                href="/reception/jobs"
-                className="inline-flex items-center gap-1.5 text-xs font-black text-sky-600 hover:text-sky-700 mb-2 transition-colors"
-              >
-                ← Back to Production Overview (ওভারভিউতে ফিরে যান)
-              </Link>
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 flex items-center gap-3">
-                <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${currentSectionConfig.iconBg} shadow-sm text-base`}>
-                  {React.createElement(currentSectionConfig.icon, { className: 'h-5 w-5' })}
-                </span>
-                {currentSectionConfig.name} Orders
-              </h1>
-              <p className="text-xs font-semibold text-slate-500 mt-1">
-                {currentSectionConfig.code} · {currentSectionConfig.tagline}
-              </p>
-            </div>
-
-            <Link
-              href="/reception/jobs/new"
-              className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-amber-500 px-4 text-xs font-black text-slate-950 shadow-sm self-start sm:self-center"
-            >
-              <Plus className="h-4 w-4" />
-              New {currentSectionConfig.name} Job
-            </Link>
-          </div>
-
-          {/* Section Search & Status Filters */}
-          <SectionCard>
-            <div className="flex flex-col gap-3 border-b border-border p-4 md:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={`Search in ${currentSectionConfig.name}...`}
-                  className="h-10 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-sm outline-none focus:border-primary"
-                />
-              </div>
-              <div className="relative">
-                <Filter className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="h-10 w-full appearance-none rounded-xl border border-input bg-background pl-9 pr-8 text-xs font-semibold outline-none focus:border-primary md:w-48"
-                >
-                  <option value="">All statuses</option>
-                  {Object.values(JobStatus).map(s => <option key={s} value={s}>{s.replaceAll('_', ' ')}</option>)}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-              </div>
-            </div>
-
-            {isLoading ? (
-              <LoadingRows />
-            ) : isError ? (
-              <ErrorState retry={refetch} />
-            ) : (sectionJobs.length > 0 ? (
-              <JobTable jobs={sectionJobs} />
-            ) : (
-              <JobTable jobs={currentSectionConfig.defaultPreviews.map((p, idx) => ({
-                id: `demo-${idx}`,
-                jobNumber: `JOB-${1000 + idx}`,
-                companyId: 'demo',
-                companyName: p.companyName,
-                contactPerson: 'Operations Floor',
-                jobType: p.item,
-                printingSection: currentSectionConfig.name,
-                description: p.item,
-                quantity: parseInt(p.quantity.replace(/\D/g, '')) || 2500,
-                receivedQuantity: parseInt(p.quantity.replace(/\D/g, '')) || 2500,
-                expectedDeliveryDate: '2026-09-18',
-                priority: JobPriority.NORMAL,
-                sampleRequired: false,
-                status: JobStatus.IN_PRODUCTION,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              }))} />
-            ))}
-          </SectionCard>
-        </div>
-      </Shell>
-    );
-  }
-
-  // Default Overview Mode matching the user's requested mockup design
   return (
     <Shell>
-      <div className="page-enter">
-        <FactoryProductionOverview jobs={allJobs} />
-      </div>
+      <AllFactoryOrdersPage />
     </Shell>
   );
 }
 
-
 function NewJob() {
-  const { data: companies } = useListCompanies({ page: 1, pageSize: 100 });
-  const { data: catalogs } = useGetSettingsCatalogs();
-  const create = useCreateJob();
-  const [, setLocation] = useLocation();
-  const [toast, setToast] = useState('');
-  const [form, setForm] = useState({
-    companyId: '',
-    contactPerson: '',
-    jobType: '',
-    printingSection: '',
-    quantity: '1',
-    receivedQuantity: '1',
-    expectedDeliveryDate: '',
-    priority: JobPriority.NORMAL,
-    sampleRequired: false,
-    // extra fields stored in notes on submit
-    challanNumber: '',
-    styleNumber: '',
-    buyerName: '',
-    deliveryPerson: '',
-  });
-  const update = (key: string, value: string | boolean) => setForm((f) => ({ ...f, [key]: value }));
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    const noteParts: string[] = [];
-    if (form.challanNumber) noteParts.push(`চালান: ${form.challanNumber}`);
-    if (form.styleNumber) noteParts.push(`স্টাইল: ${form.styleNumber}`);
-    if (form.buyerName) noteParts.push(`বায়ার: ${form.buyerName}`);
-    if (form.deliveryPerson) noteParts.push(`ডেলিভারি ব্যক্তি: ${form.deliveryPerson}`);
-    create.mutate({
-      data: {
-        companyId: form.companyId,
-        contactPerson: form.contactPerson,
-        jobType: form.jobType,
-        printingSection: form.printingSection,
-        description: form.jobType || 'নতুন জব',
-        quantity: Number(form.quantity),
-        receivedQuantity: Number(form.receivedQuantity),
-        expectedDeliveryDate: form.expectedDeliveryDate,
-        priority: form.priority,
-        sampleRequired: form.sampleRequired,
-        notes: noteParts.join(' | '),
-      },
-    }, {
-      onSuccess: (job) => {
-        setToast(`জব ${job.jobNumber} সফলভাবে নেওয়া হয়েছে`);
-        setTimeout(() => setLocation(`/reception/jobs/${job.id}`), 700);
-      },
-    });
-  };
-
   return (
     <Shell>
-      <div className="page-enter max-w-4xl">
-        <PageHeader
-          eyebrow="রিসেপশন / ইনটেক"
-          title="নতুন জব নিন।"
-          detail="একবার সঠিকভাবে তথ্য দিন — ডেলিভারি পর্যন্ত এই রেকর্ড ব্যবহার হবে।"
-        />
-        <form onSubmit={submit} className="space-y-5">
-
-          {/* ── Section 1: ক্লায়েন্ট তথ্য ── */}
-          <SectionCard title="ক্লায়েন্ট তথ্য">
-            <div className="grid gap-4 p-5 md:grid-cols-2">
-              <Field label="কোম্পানি নাম" required testId="select-job-company">
-                <select
-                  required
-                  value={form.companyId}
-                  onChange={(e) => {
-                    update('companyId', e.target.value);
-                    const c = companies?.items.find(i => i.id === e.target.value);
-                    if (c) update('contactPerson', c.contactPerson);
-                  }}
-                  className="h-10 w-full rounded-sm border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                >
-                  <option value="">কোম্পানি বেছে নিন</option>
-                  {companies?.items.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </Field>
-
-              <Field
-                label="যোগাযোগ ব্যক্তি"
-                value={form.contactPerson}
-                onChange={(v) => update('contactPerson', v)}
-                required
-                placeholder="যোগাযোগের ব্যক্তির নাম"
-                testId="input-job-contact"
-              />
-
-              <Field
-                label="বায়ার নাম"
-                value={form.buyerName}
-                onChange={(v) => update('buyerName', v)}
-                placeholder="Buyer-এর নাম লিখুন"
-                testId="input-buyer-name"
-              />
-
-              <Field
-                label="ডেলিভারি ব্যক্তির নাম"
-                value={form.deliveryPerson}
-                onChange={(v) => update('deliveryPerson', v)}
-                placeholder="ডেলিভারি দেবেন যিনি"
-                testId="input-delivery-person"
-              />
-            </div>
-          </SectionCard>
-
-          {/* ── Section 2: অর্ডার তথ্য ── */}
-          <SectionCard title="অর্ডার তথ্য">
-            <div className="grid gap-4 p-5 md:grid-cols-2">
-              <Field
-                label="আইটেম"
-                value={form.jobType}
-                onChange={(v) => update('jobType', v)}
-                placeholder="যেমন: Product sleeve, T-shirt print"
-                required
-                testId="input-job-type"
-              />
-
-              <Field
-                label="চালান নম্বর"
-                value={form.challanNumber}
-                onChange={(v) => update('challanNumber', v)}
-                placeholder="চালান / DC নম্বর"
-                testId="input-challan-number"
-              />
-
-              <Field
-                label="স্টাইল নম্বর"
-                value={form.styleNumber}
-                onChange={(v) => update('styleNumber', v)}
-                placeholder="Style / PO নম্বর"
-                testId="input-style-number"
-              />
-
-              <Field label="প্রাপ্ত সেকশন" required testId="select-job-section">
-                <select
-                  required
-                  value={form.printingSection}
-                  onChange={(e) => update('printingSection', e.target.value)}
-                  className="h-10 w-full rounded-sm border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                >
-                  <option value="">সেকশন বেছে নিন</option>
-                  {(catalogs?.printingSections || []).map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
-                  {!catalogs?.printingSections?.length && <option value="Offset">Offset</option>}
-                </select>
-              </Field>
-
-              <Field label="স্যাম্পল বা প্রোডাকশন" required testId="select-sample-production">
-                <select
-                  value={form.sampleRequired ? 'sample' : 'production'}
-                  onChange={(e) => update('sampleRequired', e.target.value === 'sample')}
-                  className="h-10 w-full rounded-sm border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                >
-                  <option value="production">প্রোডাকশন</option>
-                  <option value="sample">স্যাম্পল</option>
-                </select>
-              </Field>
-            </div>
-          </SectionCard>
-
-          {/* ── Section 3: পরিমাণ ও ডেলিভারি ── */}
-          <SectionCard title="পরিমাণ ও ডেলিভারি তারিখ">
-            <div className="grid gap-4 p-5 md:grid-cols-4">
-              <Field
-                label="মোট পরিমাণ"
-                type="number"
-                value={form.quantity}
-                onChange={(v) => update('quantity', v)}
-                required
-                testId="input-job-quantity"
-              />
-              <Field
-                label="প্রাপ্ত পরিমাণ"
-                type="number"
-                value={form.receivedQuantity}
-                onChange={(v) => update('receivedQuantity', v)}
-                required
-                testId="input-received-quantity"
-              />
-              <Field
-                label="ডেলিভারি তারিখ"
-                type="date"
-                value={form.expectedDeliveryDate}
-                onChange={(v) => update('expectedDeliveryDate', v)}
-                required
-                testId="input-job-due-date"
-              />
-              <Field label="প্রায়োরিটি" testId="select-job-priority">
-                <select
-                  value={form.priority}
-                  onChange={(e) => update('priority', e.target.value)}
-                  className="h-10 w-full rounded-sm border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                >
-                  {Object.values(JobPriority).map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-              </Field>
-            </div>
-          </SectionCard>
-
-          <div className="flex justify-end gap-3">
-            <Link
-              href="/reception/jobs"
-              className="inline-flex min-h-10 items-center px-3 text-xs font-bold text-muted-foreground"
-              data-testid="link-cancel-new-job"
-            >
-              বাতিল
-            </Link>
-            <Button type="submit" disabled={create.isPending} testId="button-submit-job">
-              {create.isPending ? 'সংরক্ষণ হচ্ছে…' : <><Check className="h-4 w-4" />জব নিন</>}
-            </Button>
-          </div>
-        </form>
-        {toast && <Toast message={toast} onClose={() => setToast('')} />}
-      </div>
+      <NewJobOrderPage />
     </Shell>
   );
 }
 
 function JobDetailPage() {
-  const { id = '' } = useParams<{ id: string }>();
-  const { data: job, isLoading, isError, refetch } = useGetJob(id);
-  const statusMutation = useUpdateJobStatus();
-  const [note, setNote] = useState('');
-  if (isLoading) return <Shell><LoadingRows /></Shell>;
-  if (isError || !job) return <Shell><ErrorState retry={refetch} /></Shell>;
-  return <Shell><div className="page-enter"><PageHeader eyebrow={`Job / ${job.jobNumber}`} title={job.companyName} detail={`${job.jobType} · ${job.printingSection}`} action={<div className="flex gap-2"><Badge tone={StatusTone(job.status)}>{job.status.replaceAll('_', ' ')}</Badge><Badge tone={job.priority === 'URGENT' ? 'danger' : job.priority === 'HIGH' ? 'warn' : 'neutral'}>{job.priority}</Badge></div>} /><div className="grid gap-5 lg:grid-cols-[1.3fr_.7fr]"><div className="space-y-5"><SectionCard title="Job brief"><div className="grid gap-5 p-5 sm:grid-cols-3"><Info label="Quantity" value={`${job.receivedQuantity.toLocaleString()} / ${job.quantity.toLocaleString()}`} /><Info label="Promise date" value={date(job.expectedDeliveryDate)} /><Info label="Days in factory" value={`${job.daysInFactory ?? '—'} days`} /><Info label="Contact" value={job.contactPerson || '—'} /><Info label="Remaining" value={`${job.remainingQuantity ?? Math.max(0, job.quantity - (job.completedQuantity || 0))}`} /><Info label="Sample" value={job.sampleRequired ? 'Required' : 'Not required'} /></div><div className="border-t border-border px-5 py-4"><p className="mono mb-2 text-[9px] uppercase tracking-[.12em] text-muted-foreground">Description</p><p className="text-sm leading-relaxed">{job.description}</p></div></SectionCard><SectionCard title="Timeline"><div className="p-5">{job.timeline?.length ? <div className="space-y-5">{job.timeline.map((item, i) => <div className="relative flex gap-4" key={item.id}><div className="relative flex w-4 justify-center"><span className={`z-10 mt-1.5 h-2.5 w-2.5 rounded-full ${i === 0 ? 'bg-primary' : 'bg-muted-foreground'}`} />{i < job.timeline.length - 1 && <span className="absolute top-4 h-full w-px bg-border" />}</div><div className="pb-1"><p className="text-sm font-bold">{item.action}</p><p className="mt-1 text-xs text-muted-foreground">{item.description}</p><p className="mono mt-2 text-[9px] uppercase text-muted-foreground">{item.actorName} · {dateTime(item.createdAt)}</p></div></div>)}</div> : <EmptyState title="No timeline entries" detail="The first status update will appear here." />}</div></SectionCard></div><div className="space-y-5"><SectionCard title="Move the job"><div className="space-y-3 p-5"><p className="text-xs leading-relaxed text-muted-foreground">Status changes are logged and visible to the whole floor.</p><select id="status" defaultValue={job.status} className="h-10 w-full rounded-sm border border-input bg-background px-3 text-xs font-semibold outline-none focus:border-primary">{Object.values(JobStatus).map(s => <option key={s} value={s}>{s.replaceAll('_', ' ')}</option>)}</select><input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional status note" data-testid="input-status-note" className="h-10 w-full rounded-sm border border-input bg-background px-3 text-xs outline-none focus:border-primary" /><Button className="w-full" disabled={statusMutation.isPending} onClick={() => { const value = (document.getElementById('status') as HTMLSelectElement).value as JobStatus; statusMutation.mutate({ id, data: { status: value, note } }, { onSuccess: () => { setNote(''); refetch(); } }); }} testId="button-update-job-status">{statusMutation.isPending ? 'Updating…' : 'Update status'}</Button></div></SectionCard><SectionCard><div className="bg-foreground p-5 text-background"><p className="mono text-[9px] uppercase tracking-[.16em] text-background/55">Delivery promise</p><p className="display mt-3 text-4xl font-extrabold">{date(job.expectedDeliveryDate)}</p><p className="mt-2 text-xs text-background/60">{job.overdue ? 'This job is overdue. Escalation recommended.' : 'On the current promise date.'}</p></div></SectionCard></div></div></div></Shell>;
+  return (
+    <Shell>
+      <JobOrderViewPage />
+    </Shell>
+  );
+}
+
+function ManageSections() {
+  return (
+    <Shell>
+      <ManageSectionsPage />
+    </Shell>
+  );
 }
 function Info({ label, value }: { label: string; value: string }) { return <div><p className="mono text-[9px] uppercase tracking-[.1em] text-muted-foreground">{label}</p><p className="mt-2 text-sm font-extrabold">{value}</p></div>; }
 
@@ -1068,7 +822,7 @@ function UsersPage() { const [search, setSearch] = useState(''); const { data, i
 
 function AuditLogs() { const [search, setSearch] = useState(''); const { data, isLoading, isError, refetch } = useListAuditLogs({ search: search || undefined, page: 1, pageSize: 50 }); return <Shell><div className="page-enter"><PageHeader eyebrow="Control room / traceability" title="Audit activity." detail="A durable record of who changed what, and when." /><SectionCard><div className="border-b border-border p-4"><div className="relative max-w-md"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search user, action, or entity" data-testid="input-search-audit" className="h-10 w-full rounded-sm border border-input bg-background pl-9 text-sm outline-none focus:border-primary" /></div></div>{isLoading ? <LoadingRows /> : isError ? <ErrorState retry={refetch} /> : data?.items.length ? <div className="divide-y divide-border">{data.items.map(log => <div key={log.id} className="flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between" data-testid={`row-audit-${log.id}`}><div className="flex items-start gap-3"><span className="mt-1.5 h-2 w-2 rounded-full bg-accent" /><div><p className="text-sm font-bold">{log.action} <span className="font-normal text-muted-foreground">on {log.entity}</span></p><p className="mt-1 text-xs text-muted-foreground">{log.userName} · {log.entityId}</p></div></div><div className="mono text-[10px] text-muted-foreground">{dateTime(log.createdAt)}</div></div>)}</div> : <EmptyState title="No audit events" detail="Changes to jobs, clients, and finance will appear here." />}</SectionCard></div></Shell>; }
 
-function Settings() { const { data, isLoading, isError, refetch } = useGetSettingsCatalogs(); if (isLoading) return <Shell><DashboardSkeleton /></Shell>; if (isError || !data) return <Shell><ErrorState retry={refetch} /></Shell>; const groups: { title: string; items: string[]; Icon: typeof Building2 }[] = [{ title: 'Departments', items: data.departments.map(d => `${d.code} · ${d.name}`), Icon: Building2 }, { title: 'Printing sections', items: data.printingSections.map(s => s.name), Icon: FileBarChart }, { title: 'Job statuses', items: data.jobStatuses.map(s => s.replaceAll('_', ' ')), Icon: ActivityIcon }]; return <Shell><div className="page-enter"><PageHeader eyebrow="Control room / configuration" title="Catalog settings." detail="Keep the factory vocabulary consistent across every handover." /><div className="grid gap-5 md:grid-cols-3">{groups.map(({ title, items, Icon }) => <SectionCard key={title} title={title} action={<Button disabled variant="ghost" className="px-2" testId={`button-edit-${title.toLowerCase().replaceAll(' ', '-')}`}><MoreHorizontal className="h-4 w-4" /></Button>}><div className="divide-y divide-border">{items.map(item => <div className="flex items-center gap-3 px-5 py-3 text-xs font-semibold" key={item}><Icon className="h-4 w-4 text-primary" />{item}</div>)}</div></SectionCard>)}</div><div className="mt-5 rounded-sm border border-accent/30 bg-accent/5 p-5"><div className="flex gap-3"><Sparkles className="mt-0.5 h-5 w-5 text-accent" /><div><h2 className="text-sm font-extrabold">Catalogs are operational language.</h2><p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">When your teams use the same names for sections and statuses, handovers get shorter and reporting gets sharper. Changes here affect new records going forward.</p></div></div></div></div></Shell>; }
+function Settings() { const { data, isLoading, isError, refetch } = useGetSettingsCatalogs(); if (isLoading) return <Shell><DashboardSkeleton /></Shell>; if (isError || !data) return <Shell><ErrorState retry={refetch} /></Shell>; const groups: { title: string; items: string[]; Icon: typeof Building2 }[] = [{ title: 'Departments', items: data.departments.map(d => `${d.code} · ${d.name}`), Icon: Building2 }, { title: 'Printing sections', items: data.printingSections.map(s => s.name), Icon: FileBarChart }, { title: 'Job statuses', items: data.jobStatuses.map(s => s.replaceAll('_', ' ')), Icon: ActivityIcon }]; return <Shell><div className="page-enter"><PageHeader eyebrow="Control room / configuration" title="Catalog settings." detail="Keep the factory vocabulary consistent across every handover." /><div className="grid gap-5 md:grid-cols-3">{groups.map(({ title, items, Icon }) => <SectionCard key={title} title={title} action={title === 'Printing sections' ? <Link href="/admin/sections" className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 hover:text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg transition"><Plus className="h-3 w-3" /> Manage</Link> : <Button disabled variant="ghost" className="px-2" testId={`button-edit-${title.toLowerCase().replaceAll(' ', '-')}`}><MoreHorizontal className="h-4 w-4" /></Button>}><div className="divide-y divide-border">{items.map(item => <div className="flex items-center gap-3 px-5 py-3 text-xs font-semibold" key={item}><Icon className="h-4 w-4 text-primary" />{item}</div>)}</div></SectionCard>)}</div><div className="mt-5 rounded-sm border border-accent/30 bg-accent/5 p-5"><div className="flex gap-3"><Sparkles className="mt-0.5 h-5 w-5 text-accent" /><div><h2 className="text-sm font-extrabold">Catalogs are operational language.</h2><p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">When your teams use the same names for sections and statuses, handovers get shorter and reporting gets sharper. Changes here affect new records going forward.</p></div></div></div></div></Shell>; }
 
 function AuthPage() { const [, setLocation] = useLocation(); const [identifier, setIdentifier] = useState(''); const [password, setPassword] = useState(''); const [error, setError] = useState(''); const [loading, setLoading] = useState(false); const submit = async (e: FormEvent) => { e.preventDefault(); setLoading(true); setError(''); try { const response = await fetch('/api/auth/login', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ identifier, password }) }); const body = await response.json(); if (!response.ok) throw new Error(body.error || 'Unable to sign in.'); await queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() }); setLocation(body.redirectTo || '/md'); } catch (err) { setError(err instanceof Error ? err.message : 'Unable to sign in.'); } finally { setLoading(false); } }; return <div className="grid-paper flex min-h-[100dvh] items-center justify-center bg-background px-5 py-10"><div className="w-full max-w-[420px]"><Logo /><div className="mt-10 rounded-sm border border-border bg-card p-7 shadow-xl"><p className="mono text-[10px] uppercase tracking-[.18em] text-primary">ZM FactoryOS · secure access</p><h1 className="display mt-3 text-3xl font-extrabold">Back to the floor.</h1><p className="mt-2 text-sm leading-relaxed text-muted-foreground">Sign in with the individual work account created by your Master MD or administrator.</p>{error && <div className="mt-5 rounded-sm border border-destructive/30 bg-destructive/10 p-3 text-xs font-semibold text-destructive">{error}</div>}<form className="mt-8 space-y-4" onSubmit={submit}><Field label="Username or email" value={identifier} onChange={setIdentifier} placeholder="e.g. MD or rahim" autoComplete="username" required testId="input-auth-identifier" /><Field label="Password" type="password" value={password} onChange={setPassword} placeholder="Enter your password" autoComplete="current-password" required testId="input-auth-password" /><Button type="submit" disabled={loading} className="mt-3 w-full" testId="button-auth-submit">{loading ? 'Checking access…' : 'Sign in to FactoryOS'} <ArrowRight className="h-4 w-4" /></Button></form><p className="mt-7 border-t border-border pt-5 text-center text-xs text-muted-foreground">No public registration. Ask the Master MD to create your work account.</p></div><Link href="/" className="mt-6 block text-center text-xs font-bold text-muted-foreground hover:text-primary" data-testid="link-auth-home">← Back to factory overview</Link></div></div>; }
 
@@ -1372,7 +1126,7 @@ function KpiReceivable() {
   const { data: partial } = useListInvoices({ status: InvoiceStatus.PARTIAL, page: 1, pageSize: 100 });
   const { data: overdue } = useListInvoices({ status: InvoiceStatus.OVERDUE, page: 1, pageSize: 100 });
   const items = [...(data?.items ?? []), ...(partial?.items ?? []), ...(overdue?.items ?? [])];
-  const totalReceivable = items.reduce((s, i) => s + (i.grandTotal - (i.amountPaid ?? 0)), 0);
+  const totalReceivable = items.reduce((s, i) => s + (i.grandTotal - (i.paid ?? 0)), 0);
   return (
     <Shell><div className="page-enter">
       <KpiBackLink />
@@ -1411,7 +1165,7 @@ function KpiReceivable() {
                     <td className="px-5 py-4 text-xs">{date(inv.dueDate)}</td>
                     <td className="px-5 py-4"><Badge tone={inv.status === InvoiceStatus.OVERDUE ? 'danger' : inv.status === InvoiceStatus.PARTIAL ? 'warn' : 'neutral'}>{inv.status}</Badge></td>
                     <td className="px-5 py-4 text-right text-sm font-bold">{money(inv.grandTotal)}</td>
-                    <td className="px-5 py-4 text-right text-sm font-extrabold text-destructive">{money(inv.grandTotal - (inv.amountPaid ?? 0))}</td>
+                    <td className="px-5 py-4 text-right text-sm font-extrabold text-destructive">{money(inv.grandTotal - (inv.paid ?? 0))}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1609,7 +1363,7 @@ function KpiProfit() {
 }
 
 function AppRoutes() {
-  return <Switch><Route path="/" component={Landing} /><Route path="/sign-in/*?" component={AuthPage} /><Route path="/change-password" component={ChangePassword} /><Route path="/md/kpi/today-jobs" component={KpiTodayJobs} /><Route path="/md/kpi/active-jobs" component={KpiActiveJobs} /><Route path="/md/kpi/production" component={KpiProduction} /><Route path="/md/kpi/ready" component={KpiReady} /><Route path="/md/kpi/receivable" component={KpiReceivable} /><Route path="/md/kpi/revenue" component={KpiRevenue} /><Route path="/md/kpi/expenses" component={KpiExpenses} /><Route path="/md/kpi/profit" component={KpiProfit} /><Route path="/md" component={Management} /><Route path="/reception" component={Reception} /><Route path="/reception/jobs/new" component={NewJob} /><Route path="/reception/jobs/:id" component={JobDetailPage} /><Route path="/reception/jobs" component={Jobs} /><Route path="/clients/:id" component={CompanyDetailPage} /><Route path="/clients" component={Clients} /><Route path="/billing/invoices" component={Invoices} /><Route path="/billing/payments" component={Payments} /><Route path="/billing" component={Billing} /><Route path="/accounting" component={Accounting} /><Route path="/admin/users" component={UsersPage} /><Route path="/admin/audit-logs" component={AuditLogs} /><Route path="/settings" component={Settings} /><Route component={NotFound} /></Switch>;
+  return <Switch><Route path="/" component={Landing} /><Route path="/sign-in/*?" component={AuthPage} /><Route path="/change-password" component={ChangePassword} /><Route path="/md/kpi/today-jobs" component={KpiTodayJobs} /><Route path="/md/kpi/active-jobs" component={KpiActiveJobs} /><Route path="/md/kpi/production" component={KpiProduction} /><Route path="/md/kpi/ready" component={KpiReady} /><Route path="/md/kpi/receivable" component={KpiReceivable} /><Route path="/md/kpi/revenue" component={KpiRevenue} /><Route path="/md/kpi/expenses" component={KpiExpenses} /><Route path="/md/kpi/profit" component={KpiProfit} /><Route path="/md" component={Management} /><Route path="/reception" component={Reception} /><Route path="/reception/jobs/new" component={NewJob} /><Route path="/reception/jobs/:id" component={JobDetailPage} /><Route path="/reception/jobs" component={Jobs} /><Route path="/clients/:id" component={CompanyDetailPage} /><Route path="/clients" component={Clients} /><Route path="/billing/invoices" component={Invoices} /><Route path="/billing/payments" component={Payments} /><Route path="/billing" component={Billing} /><Route path="/accounting" component={Accounting} /><Route path="/admin/users" component={UsersPage} /><Route path="/admin/audit-logs" component={AuditLogs} /><Route path="/admin/sections" component={ManageSections} /><Route path="/settings" component={Settings} /><Route component={NotFound} /></Switch>;
 }
 
 function App() { return <QueryClientProvider client={queryClient}><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><AppRoutes /></WouterRouter></QueryClientProvider>; }
